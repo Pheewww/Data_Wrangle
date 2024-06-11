@@ -4,6 +4,12 @@ import { FaFileUpload } from "react-icons/fa";
 const Table = () => {
   const [data, setData] = useState([]);
   const [columns, setColumns] = useState([]);
+  const [contextMenu, setContextMenu] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    rowIndex: null,
+  });
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -24,25 +30,31 @@ const Table = () => {
     reader.readAsText(file);
   };
 
-  const addColumn = () => {
-    // Prompt the user for a new column name
-    const newColumnName = prompt("Enter the name of the new column:");
-    if (!newColumnName) return;
-
-    // Add the new column to the columns array
-    setColumns((prevColumns) => [...prevColumns, newColumnName]);
-
-    // Add an empty value for the new column in each row
-    setData((prevData) => prevData.map((row) => [...row, ""]));
+  const handleAddRow = (index) => {
+    const newRow = Array(columns.length).fill(""); // Create a new row with empty values
+    newRow[0] = data.length + 1; // Assign the next row number
+    const newData = [...data];
+    newData.splice(index + 1, 0, newRow); // Insert the new row after the clicked row
+    setData(newData);
+    setContextMenu({ visible: false, x: 0, y: 0, rowIndex: null });
   };
 
-  const handleRightClick = (event) => {
+  const handleRightClick = (event, rowIndex) => {
     event.preventDefault();
-    addColumn();
+    setContextMenu({
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      rowIndex: rowIndex,
+    });
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu({ visible: false, x: 0, y: 0, rowIndex: null });
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4" onClick={handleCloseContextMenu}>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-gray-700">Data Table</h1>
         <input
@@ -89,18 +101,13 @@ const Table = () => {
                 key={rowIndex}
                 className="hover:bg-gray-50 transition duration-300"
               >
-                <td className="py-2 px-4 border-b border-gray-300 text-sm text-gray-700">
-                  <button
-                    className="w-full bg-green-100 hover:bg-green-200 text-green-700 py-1 px-2 rounded transition duration-300"
-                    onContextMenu={handleRightClick}
-                  >
-                    {rowIndex + 1}
-                  </button>
-                </td>
-                {row.slice(1).map((cell, cellIndex) => (
+                {row.map((cell, cellIndex) => (
                   <td
                     key={cellIndex}
                     className="py-2 px-4 border-b border-gray-300 text-sm text-gray-700"
+                    onContextMenu={(e) =>
+                      cellIndex === 0 && handleRightClick(e, rowIndex)
+                    }
                   >
                     {cell}
                   </td>
@@ -110,6 +117,20 @@ const Table = () => {
           </tbody>
         </table>
       </div>
+
+      {contextMenu.visible && (
+        <div
+          className="absolute bg-white border border-gray-300 rounded shadow-lg p-2"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button
+            className="block w-full text-left text-sm text-blue-700 py-1 px-2 hover:bg-blue-100 rounded transition duration-300"
+            onClick={() => handleAddRow(contextMenu.rowIndex)}
+          >
+            Add Row
+          </button>
+        </div>
+      )}
     </div>
   );
 };
