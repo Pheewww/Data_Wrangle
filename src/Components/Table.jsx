@@ -9,6 +9,8 @@ const Table = () => {
     x: 0,
     y: 0,
     rowIndex: null,
+    columnIndex: null,
+    type: null, // 'row' or 'column'
   });
 
   const handleFileUpload = (event) => {
@@ -36,21 +38,67 @@ const Table = () => {
     const newData = [...data];
     newData.splice(index + 1, 0, newRow); // Insert the new row after the clicked row
     setData(newData);
-    setContextMenu({ visible: false, x: 0, y: 0, rowIndex: null });
+    setContextMenu({
+      visible: false,
+      x: 0,
+      y: 0,
+      rowIndex: null,
+      columnIndex: null,
+      type: null,
+    });
   };
 
-  const handleRightClick = (event, rowIndex) => {
+  const handleAddColumn = (index) => {
+    const newColumnName = prompt("Enter column name:");
+    if (newColumnName) {
+      const newColumns = [...columns];
+      newColumns.splice(index + 1, 0, newColumnName);
+
+      const newData = data.map((row) => {
+        const newRow = [...row];
+        newRow.splice(index + 1, 0, "");
+        return newRow;
+      });
+
+      setColumns(newColumns);
+      setData(newData);
+      setContextMenu({
+        visible: false,
+        x: 0,
+        y: 0,
+        rowIndex: null,
+        columnIndex: null,
+        type: null,
+      });
+    }
+  };
+
+  const handleRightClick = (
+    event,
+    rowIndex = null,
+    columnIndex = null,
+    type = null
+  ) => {
     event.preventDefault();
     setContextMenu({
       visible: true,
       x: event.clientX,
       y: event.clientY,
       rowIndex: rowIndex,
+      columnIndex: columnIndex,
+      type: type,
     });
   };
 
   const handleCloseContextMenu = () => {
-    setContextMenu({ visible: false, x: 0, y: 0, rowIndex: null });
+    setContextMenu({
+      visible: false,
+      x: 0,
+      y: 0,
+      rowIndex: null,
+      columnIndex: null,
+      type: null,
+    });
   };
 
   return (
@@ -80,10 +128,13 @@ const Table = () => {
         <table className="min-w-full bg-white">
           <thead className="sticky top-0 bg-gray-100">
             <tr>
-              {columns.map((column, index) => (
+              {columns.map((column, columnIndex) => (
                 <th
-                  key={index}
+                  key={columnIndex}
                   className="py-2 px-4 border-b border-gray-300 text-left text-sm font-semibold text-gray-700"
+                  onContextMenu={(e) =>
+                    handleRightClick(e, null, columnIndex, "column")
+                  }
                 >
                   <button
                     className="w-full text-left bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-2 rounded transition duration-300"
@@ -106,7 +157,8 @@ const Table = () => {
                     key={cellIndex}
                     className="py-2 px-4 border-b border-gray-300 text-sm text-gray-700"
                     onContextMenu={(e) =>
-                      cellIndex === 0 && handleRightClick(e, rowIndex)
+                      cellIndex === 0 &&
+                      handleRightClick(e, rowIndex, null, "row")
                     }
                   >
                     {cell}
@@ -118,7 +170,7 @@ const Table = () => {
         </table>
       </div>
 
-      {contextMenu.visible && (
+      {contextMenu.visible && contextMenu.type === "row" && (
         <div
           className="absolute bg-white border border-gray-300 rounded shadow-lg p-2"
           style={{ top: contextMenu.y, left: contextMenu.x }}
@@ -128,6 +180,20 @@ const Table = () => {
             onClick={() => handleAddRow(contextMenu.rowIndex)}
           >
             Add Row
+          </button>
+        </div>
+      )}
+
+      {contextMenu.visible && contextMenu.type === "column" && (
+        <div
+          className="absolute bg-white border border-gray-300 rounded shadow-lg p-2"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button
+            className="block w-full text-left text-sm text-blue-700 py-1 px-2 hover:bg-blue-100 rounded transition duration-300"
+            onClick={() => handleAddColumn(contextMenu.columnIndex)}
+          >
+            Add Column
           </button>
         </div>
       )}
