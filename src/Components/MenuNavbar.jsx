@@ -31,6 +31,7 @@ const Menu_NavBar = () => {
         options: [
           { name: "Rows", icon: "🏗️" },
           { name: "Column", icon: "🏗️" },
+          { name: "Column2", icon: "🏗️" },
         ],
       },
     ],
