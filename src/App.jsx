@@ -9,11 +9,11 @@ function App() {
   return (
     <>
       {/* className="min-h-screen bg-gray-900 " */}
-      <DataScreen />
-      {/* <div><Navbar/></div>
+      {/* <DataScreen /> */}
+      <div><Navbar/></div>
       <div>
         <HomeScreen />
-      </div> */}
+      </div>
     </>
   );
 }

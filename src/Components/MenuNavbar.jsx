@@ -61,6 +61,7 @@ const Menu_NavBar = () => {
         options: [
           { name: "Sort", icon: "🔢" },
           { name: "Filter", icon: "🔍" },
+          { name: "Filter2", icon: "🔍" },
         ],
       },
       {
@@ -106,7 +107,7 @@ const Menu_NavBar = () => {
           </button>
         ))}
       </div>
-      <div className="bg-white p-2">
+      <div className="bg-white p-2 h-40">
         <div className="flex space-x-2">
           {menuOptions[activeTab]?.map((group, groupIndex) => (
             <div

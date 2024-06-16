@@ -11,6 +11,9 @@ const HomeScreen = () => {
   const handleCloseModal = () => {
     setShowModal(false);
   };
+  const handleSubmitModal = () => {
+    setShowModal(false);
+  };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -32,7 +35,7 @@ const HomeScreen = () => {
           .
         </h1>
       </div>
-      <div className="mt-20 mr-44 grid grid-cols-2 gap-10 justify-start w-2/5 font-sans font-semibold">
+      <div className="mt-20 mr-32 grid grid-cols-2 gap-10 justify-start w-2/5 font-sans font-semibold">
         <button
           className="px-2 py-4 bg-gradient-to-r from-green-400 hover:bg-blue-600 rounded-lg shadow-lg"
           onClick={handleNewProjectClick}
@@ -56,18 +59,38 @@ const HomeScreen = () => {
             onClick={handleCloseModal}
           ></div>
           <div className="bg-white rounded-lg p-8 z-50">
+            <h2 className="text-2xl font-semibold mb-4">Project Name</h2>
+            <input
+              type="text"
+              className="block w-full text-lg text-gray-900 border border-gray-300 rounded-lg cursor-text bg-gray-50 focus:outline-none mb-4"
+              onChange={handleFileUpload}
+            />
             <h2 className="text-2xl font-semibold mb-4">Upload Dataset</h2>
             <input
               type="file"
               className="block w-full text-lg text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none mb-4"
               onChange={handleFileUpload}
             />
-            <button
-              className="px-4 py-2 bg-red-500 text-white rounded-lg"
-              onClick={handleCloseModal}
-            >
-              Close
-            </button>
+            <h2 className="text-2xl font-semibold mb-4">Project Description</h2>
+            <input
+              type="text"
+              className="block w-full text-lg text-gray-900 border border-gray-300 rounded-lg cursor-text bg-gray-50 focus:outline-none mb-4"
+              onChange={handleFileUpload}
+            />
+            <div className=" flex flex-row justify-between">
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+                onClick={handleSubmitModal}
+              >
+                Submit
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded-lg "
+                onClick={handleCloseModal}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
