@@ -32,11 +32,18 @@ const Table = () => {
     reader.readAsText(file);
   };
 
+
+  // ADDING ROW + COLUMN
   const handleAddRow = (index) => {
-    const newRow = Array(columns.length).fill(""); // Create a new row with empty values
-    newRow[0] = data.length + 1; // Assign the next row number
+    const newRow = Array(columns.length).fill("");
     const newData = [...data];
-    newData.splice(index + 1, 0, newRow); // Insert the new row after the clicked row
+    newData.splice(index + 1, 0, newRow);
+
+    // Rearrange index numbers
+    for (let i = index + 1; i < newData.length; i++) {
+      newData[i][0] = i + 1;
+    }
+
     setData(newData);
     setContextMenu({
       visible: false,
@@ -71,6 +78,55 @@ const Table = () => {
         type: null,
       });
     }
+  };
+
+
+  // DELETING ROW + COLUMNS
+  const handleDeleteRow = (index) => {
+    const newData = [...data];
+    newData.splice(index, 1);
+
+    // Rearrange index numbers
+    for (let i = index; i < newData.length; i++) {
+      newData[i][0] = i + 1;
+    }
+
+    setData(newData);
+    setContextMenu({
+      visible: false,
+      x: 0,
+      y: 0,
+      rowIndex: null,
+      columnIndex: null,
+      type: null,
+    });
+  };
+
+  const handleDeleteColumn = (index) => {
+    if (index === 0) {
+      alert("Cannot delete the index column.");
+      return;
+    }
+
+    const newColumns = [...columns];
+    newColumns.splice(index, 1);
+
+    const newData = data.map((row) => {
+      const newRow = [...row];
+      newRow.splice(index, 1);
+      return newRow;
+    });
+
+    setColumns(newColumns);
+    setData(newData);
+    setContextMenu({
+      visible: false,
+      x: 0,
+      y: 0,
+      rowIndex: null,
+      columnIndex: null,
+      type: null,
+    });
   };
 
   const handleRightClick = (
@@ -124,7 +180,7 @@ const Table = () => {
         </button>
       </div>
 
-      <div className="max-h-[500px] overflow-x-scroll overflow-y-auto border border-gray-300 rounded-lg shadow">
+      <div className="max-h-[500px] overflow-x-scroll overflow-y-auto border border-gray-300 rounded-lg shadow ">
         <table className="min-w-full bg-white">
           <thead className="sticky top-0 bg-gray-100">
             <tr>
@@ -162,6 +218,9 @@ const Table = () => {
                     }
                   >
                     {cell}
+                    <td>
+                      <input value={row.name} />
+                    </td>
                   </td>
                 ))}
               </tr>
@@ -181,6 +240,12 @@ const Table = () => {
           >
             Add Row
           </button>
+          <button
+            className="block w-full text-left text-sm text-blue-700 py-1 px-2 hover:bg-blue-100 rounded transition duration-300"
+            onClick={() => handleDeleteRow(contextMenu.rowIndex)}
+          >
+            Delete Row
+          </button>
         </div>
       )}
 
@@ -194,6 +259,12 @@ const Table = () => {
             onClick={() => handleAddColumn(contextMenu.columnIndex)}
           >
             Add Column
+          </button>
+          <button
+            className="block w-full text-left text-sm text-blue-700 py-1 px-2 hover:bg-blue-100 rounded transition duration-300"
+            onClick={() => handleDeleteColumn(contextMenu.columnIndex)}
+          >
+            Delete Column
           </button>
         </div>
       )}
