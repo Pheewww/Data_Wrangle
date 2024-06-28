@@ -4,6 +4,8 @@ import { FaFileUpload } from "react-icons/fa";
 const Table = () => {
   const [data, setData] = useState([]);
   const [columns, setColumns] = useState([]);
+  const [editingCell, setEditingCell] = useState(null);
+  const [editValue, setEditValue] = useState("");
   const [contextMenu, setContextMenu] = useState({
     visible: false,
     x: 0,
@@ -32,8 +34,6 @@ const Table = () => {
     reader.readAsText(file);
   };
 
-
-  // ADDING ROW + COLUMN
   const handleAddRow = (index) => {
     const newRow = Array(columns.length).fill("");
     const newData = [...data];
@@ -80,8 +80,6 @@ const Table = () => {
     }
   };
 
-
-  // DELETING ROW + COLUMNS
   const handleDeleteRow = (index) => {
     const newData = [...data];
     newData.splice(index, 1);
@@ -128,6 +126,35 @@ const Table = () => {
       type: null,
     });
   };
+
+  const handleEditCell = (rowIndex, cellIndex, newValue) => {
+    const newData = [...data];
+    newData[rowIndex][cellIndex] = newValue;
+    setData(newData);
+    setEditingCell(null);
+    setEditValue("");
+  };
+
+  const handleCellClick = (rowIndex, cellIndex, cellValue) => {
+    if (cellIndex !== 0) {
+      setEditingCell({ rowIndex, cellIndex });
+      setEditValue(cellValue);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setEditValue(e.target.value);
+  };
+
+  const handleInputKeyDown = (e, rowIndex, cellIndex) => {
+    if (e.key === "Enter") {
+      handleEditCell(rowIndex, cellIndex, editValue);
+    } else if (e.key === "Escape") {
+      setEditingCell(null);
+      setEditValue("");
+    }
+  };
+
 
   const handleRightClick = (
     event,
@@ -180,7 +207,7 @@ const Table = () => {
         </button>
       </div>
 
-      <div className="max-h-[500px] overflow-x-scroll overflow-y-auto border border-gray-300 rounded-lg shadow ">
+      <div className="max-h-[500px] overflow-x-scroll overflow-y-auto border border-gray-300 rounded-lg shadow">
         <table className="min-w-full bg-white">
           <thead className="sticky top-0 bg-gray-100">
             <tr>
@@ -213,14 +240,39 @@ const Table = () => {
                     key={cellIndex}
                     className="py-2 px-4 border-b border-gray-300 text-sm text-gray-700"
                     onContextMenu={(e) =>
-                      cellIndex === 0 &&
                       handleRightClick(e, rowIndex, null, "row")
                     }
                   >
-                    {cell}
-                    <td>
-                      <input value={row.name} />
-                    </td>
+                    {editingCell &&
+                    editingCell.rowIndex === rowIndex &&
+                    editingCell.cellIndex === cellIndex ? (
+                      <input
+                        type="text"
+                        value={editValue}
+                        onChange={handleInputChange}
+                        onBlur={() =>
+                          handleEditCell(rowIndex, cellIndex, editValue)
+                        }
+                        onKeyDown={(e) =>
+                          handleInputKeyDown(e, rowIndex, cellIndex)
+                        }
+                        autoFocus
+                        className="w-full p-1 border border-blue-300 rounded"
+                      />
+                    ) : (
+                      <div
+                        onClick={() =>
+                          handleCellClick(rowIndex, cellIndex, cell)
+                        }
+                        className={
+                          cellIndex !== 0
+                            ? "cursor-pointer hover:bg-blue-100 p-1 rounded"
+                            : ""
+                        }
+                      >
+                        {cell}
+                      </div>
+                    )}
                   </td>
                 ))}
               </tr>
@@ -228,26 +280,6 @@ const Table = () => {
           </tbody>
         </table>
       </div>
-
-      {contextMenu.visible && contextMenu.type === "row" && (
-        <div
-          className="absolute bg-white border border-gray-300 rounded shadow-lg p-2"
-          style={{ top: contextMenu.y, left: contextMenu.x }}
-        >
-          <button
-            className="block w-full text-left text-sm text-blue-700 py-1 px-2 hover:bg-blue-100 rounded transition duration-300"
-            onClick={() => handleAddRow(contextMenu.rowIndex)}
-          >
-            Add Row
-          </button>
-          <button
-            className="block w-full text-left text-sm text-blue-700 py-1 px-2 hover:bg-blue-100 rounded transition duration-300"
-            onClick={() => handleDeleteRow(contextMenu.rowIndex)}
-          >
-            Delete Row
-          </button>
-        </div>
-      )}
 
       {contextMenu.visible && contextMenu.type === "column" && (
         <div
@@ -265,6 +297,26 @@ const Table = () => {
             onClick={() => handleDeleteColumn(contextMenu.columnIndex)}
           >
             Delete Column
+          </button>
+        </div>
+      )}
+
+      {contextMenu.visible && contextMenu.type === "row" && (
+        <div
+          className="absolute bg-white border border-gray-300 rounded shadow-lg p-2"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button
+            className="block w-full text-left text-sm text-blue-700 py-1 px-2 hover:bg-blue-100 rounded transition duration-300"
+            onClick={() => handleAddRow(contextMenu.rowIndex)}
+          >
+            Add Row
+          </button>
+          <button
+            className="block w-full text-left text-sm text-blue-700 py-1 px-2 hover:bg-blue-100 rounded transition duration-300"
+            onClick={() => handleDeleteRow(contextMenu.rowIndex)}
+          >
+            Delete Row
           </button>
         </div>
       )}
