@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 const HomeScreen = () => {
   const [showModal, setShowModal] = useState(false);
+  const [fileUpload, setFileUpload] = useState(null)
   const navigate = useNavigate();
 
   const handleNewProjectClick = () => {
@@ -15,13 +16,15 @@ const HomeScreen = () => {
   };
   const handleSubmitModal = (event) => {
     event.preventDefault();
-    navigate('/data')
+    // pass file state to react table
+    navigate('/data', {state: {file: fileUpload}});
     console.log("Submitted");
     setShowModal(false);
   };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
+    setFileUpload(file);
     console.log(file);
   };
 

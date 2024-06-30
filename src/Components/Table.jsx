@@ -1,7 +1,9 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaFileUpload } from "react-icons/fa";
+import { useLocation } from "react-router-dom";
 
 const Table = () => {
+  const location = useLocation();
   const [data, setData] = useState([]);
   const [columns, setColumns] = useState([]);
   const [editingCell, setEditingCell] = useState(null);
@@ -12,34 +14,35 @@ const Table = () => {
     y: 0,
     rowIndex: null,
     columnIndex: null,
-    type: null, // 'row' or 'column'
+    type: null,
   });
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    const reader = new FileReader();
+  useEffect(() => {
+    if (location.state && location.state.file) {
+      const file = location.state.file;
+      const reader = new FileReader();
 
-    reader.onload = (e) => {
-      const text = e.target.result;
-      const lines = text.split("\n");
-      const header = ["S.no", ...lines[0].split(",")];
-      const rows = lines
-        .slice(1)
-        .map((line, index) => [index + 1, ...line.split(",")]);
+      reader.onload = (event) => {
+        const text = event.target.result;
+        const rows = text.split("\n").map((row) => row.split(","));
+        const headers = rows[0];
+        const dataRows = rows.slice(1);
 
-      setColumns(header);
-      setData(rows);
-    };
+        // Add S.No. column
+        setColumns(["S.No.", ...headers]);
+        setData(dataRows.map((row, index) => [index + 1, ...row]));
+      };
 
-    reader.readAsText(file);
-  };
+      reader.readAsText(file);
+    }
+  }, [location.state]);
 
   const handleAddRow = (index) => {
-    const newRow = Array(columns.length).fill("");
+    const newRow = ["", ...Array(columns.length - 1).fill("")];
     const newData = [...data];
     newData.splice(index + 1, 0, newRow);
 
-    // Rearrange index numbers
+    // Rearrange S.No.
     for (let i = index + 1; i < newData.length; i++) {
       newData[i][0] = i + 1;
     }
@@ -84,7 +87,7 @@ const Table = () => {
     const newData = [...data];
     newData.splice(index, 1);
 
-    // Rearrange index numbers
+    // Rearrange S.No.
     for (let i = index; i < newData.length; i++) {
       newData[i][0] = i + 1;
     }
@@ -102,7 +105,7 @@ const Table = () => {
 
   const handleDeleteColumn = (index) => {
     if (index === 0) {
-      alert("Cannot delete the index column.");
+      alert("Cannot delete the S.No. column.");
       return;
     }
 
@@ -155,7 +158,6 @@ const Table = () => {
     }
   };
 
-
   const handleRightClick = (
     event,
     rowIndex = null,
@@ -188,20 +190,7 @@ const Table = () => {
     <div className="container mx-auto p-4" onClick={handleCloseContextMenu}>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-gray-700">Data Table</h1>
-        <input
-          type="file"
-          accept=".csv"
-          className="hidden"
-          id="file-upload"
-          onChange={handleFileUpload}
-        />
-        <label
-          htmlFor="file-upload"
-          className="flex items-center cursor-pointer bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-2xl transform hover:scale-105 transition duration-300"
-        >
-          <FaFileUpload className="mr-2" />
-          Upload Dataset
-        </label>
+
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">
           SAVE
         </button>
