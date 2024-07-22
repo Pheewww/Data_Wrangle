@@ -44,6 +44,7 @@ const HomeScreen = () => {
 
       // Navigate to the data screen with the API response data
       navigate("/data", { state: { apiData: response.data } });
+      console.log("goign to data screen", response.data);
     } catch (error) {
       console.error("Error uploading file:", error);
       alert("Error uploading file. Please try again.");

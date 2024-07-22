@@ -1,17 +1,30 @@
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session
-from app import crud, schemas, database
+from app import models, schemas, database
 import pandas as pd
 import shutil
-import os
 
 router = APIRouter()
 
+# CRUD Functions
+def create_dataset(db: Session, filename: str, file_path: str ):
+    # if user_id is None:
+    #     print("User ID is None")
+    db_dataset = models.Dataset(name=filename, file_path=file_path)
+    print("db_dataset in create_dataset", db_dataset)
+    db.add(db_dataset)
+    db.commit()
+    db.refresh(db_dataset)
+    return db_dataset
+
+def get_dataset(db: Session, dataset_id: int):
+    return db.query(models.Dataset).filter(models.Dataset.dataset_id == dataset_id).first()
+
+# API Routes
 @router.post("/upload", response_model=schemas.DatasetResponse)
 async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(database.get_db)):
 
     print("FILE ->", file.filename)
-
 
     file_location = f"uploads/{file.filename}"
     with open(file_location, "wb+") as file_object:
@@ -22,16 +35,19 @@ async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(dat
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error reading dataset: {str(e)}")
     
-    dataset = crud.create_dataset(db, filename=file.filename, file_path=file_location, user_id=1)
+    dataset = create_dataset(db, filename=file.filename, file_path=file_location)
     
-    return {
-        "user_id": dataset.user_id,
+    data = {
         "filename": dataset.name,
         "file_path": dataset.file_path,
         "dataset_id": dataset.dataset_id,
         "columns": df.columns.tolist(),
-        "row_count": len(df)
+        "row_count": len(df),
+        "rows": df.values.tolist()  # Convert dataframe rows to list of lists
     }
+    print("return to frontend", data)
+    return data
+
 
 @router.post("/{dataset_id}/transform", response_model=schemas.TransformationInput)
 async def transform_dataset(
@@ -39,7 +55,7 @@ async def transform_dataset(
     transformation_input: schemas.TransformationInput,
     db: Session = Depends(database.get_db)
 ):
-    dataset = crud.get_dataset(db, dataset_id)
+    dataset = get_dataset(db, dataset_id)
     if not dataset:
         raise HTTPException(status_code=404, detail=f"Dataset with ID {dataset_id} not found")
    

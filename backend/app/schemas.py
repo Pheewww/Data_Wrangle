@@ -11,3 +11,6 @@ class DatasetResponse(BaseModel):
     filename: str
     file_path: str
     dataset_id: int
+    columns: list[str]
+    row_count: int
+    rows: list[list]

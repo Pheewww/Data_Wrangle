@@ -18,9 +18,10 @@ const Table = () => {
 
   useEffect(() => {
     if (location.state && location.state.apiData) {
-      const { columns, result } = location.state.apiData;
+      const { columns, rows } = location.state.apiData;
+      console.log("before giving col value", location.state.apiData);
       setColumns(["S.No.", ...columns]);
-      setData(result.map((row, index) => [index + 1, ...Object.values(row)]));
+      setData(rows.map((row, index) => [index + 1, ...Object.values(row)]));
     }
   }, [location.state]);
 
