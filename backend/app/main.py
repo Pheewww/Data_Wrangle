@@ -124,7 +124,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 
-# load_dotenv()
+# load_dotenv() 
 # FRONTEND_URL = os.getenv("FRONTEND_URL")  # No default value
 # if FRONTEND_URL is None:
 #     raise ValueError("FRONTEND_URL environment variable not set")
@@ -135,7 +135,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
+) 
 
 app.include_router(datasets.router, prefix="/datasets", tags=["datasets"])
 

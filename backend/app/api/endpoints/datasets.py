@@ -49,12 +49,13 @@ async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(dat
     return data
 
 
-@router.post("/{dataset_id}/transform", response_model=schemas.TransformationInput)
+@router.post("/{dataset_id}/transform", response_model=schemas.BasicQueryResponse)
 async def transform_dataset(
     dataset_id: int,
     transformation_input: schemas.TransformationInput,
     db: Session = Depends(database.get_db)
 ):
+    
     dataset = get_dataset(db, dataset_id)
     if not dataset:
         raise HTTPException(status_code=404, detail=f"Dataset with ID {dataset_id} not found")
@@ -65,23 +66,25 @@ async def transform_dataset(
         raise HTTPException(status_code=400, detail=f"Could not load dataset from file path {dataset.file_path}: {str(e)}")
 
     if transformation_input.operation_type == 'filter':
-        if not transformation_input.filter_params:
+        if not transformation_input.parameters:
             raise HTTPException(status_code=400, detail="Filter parameters are required for filter operation")
         
-        column = transformation_input.filter_params.column
-        condition = transformation_input.filter_params.condition
-        value = transformation_input.filter_params.value
+        column = transformation_input.parameters.column
+        condition = transformation_input.parameters.condition
+        value = transformation_input.parameters.value
 
-        if condition == 'eq':
+        print("col, cond, and value ->", column, condition, value) 
+
+        if condition == '=':
             df = df[df[column] == value]
-        elif condition == 'gt':
+        elif condition == '>':
             df = df[df[column] > value]
-        elif condition == 'lt':
+        elif condition == '<':
             df = df[df[column] < value]
-        elif condition == 'gte':
+        elif condition == '>=':
             df = df[df[column] >= value]
-        elif condition == 'lte':
-            df = df[df[column] <= value]
+        elif condition == '<=':
+            df = df[df[column] <= value] 
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported filter condition: {condition}")
 
@@ -99,9 +102,15 @@ async def transform_dataset(
 
     result = df.to_dict(orient='records')
     
-    return {
+    data =  {
         "dataset_id": dataset_id,
         "operation_type": transformation_input.operation_type,
-        "result": result,
-        "row_count": len(df)
+        # "result": result,
+        "row_count": len(df),
+        "columns": df.columns.tolist(),
+        "rows": df.values.tolist()  # Convert dataframe rows to list of lists
     }
+
+    print("msg to frontend", data)
+    return data 
+ 
