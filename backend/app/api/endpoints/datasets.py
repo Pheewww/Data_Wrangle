@@ -135,7 +135,11 @@ async def transform_dataset(
 
         column_name = transformation_input.col_params.name
                                         # replace   None = pd.NA if error starts
-        df = df.insert(index, column_name, None)  
+        print("DF before", df)
+
+        df.insert(index, column_name, None)  
+        print("DF After ", df)
+
         
         try:
             df.to_csv(dataset.file_path, index=False)
