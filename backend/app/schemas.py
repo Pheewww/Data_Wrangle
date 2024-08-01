@@ -10,11 +10,20 @@ class SortParameters(BaseModel):
     column: str
     ascending: bool
 
+class Add_or_Del_Row(BaseModel):
+    index: int
+
+class Add_or_Del_Column(BaseModel):
+    index: int
+    name: str
+ 
 class TransformationInput(BaseModel):
     operation_type: str
     parameters: Optional[FilterParameters] = None
     sort_params:Optional[SortParameters] = None
-
+    row_params: Optional[Add_or_Del_Row] = None
+    col_params: Optional[Add_or_Del_Column] = None
+ 
 class BasicQueryResponse(BaseModel):
     dataset_id: int
     operation_type: str

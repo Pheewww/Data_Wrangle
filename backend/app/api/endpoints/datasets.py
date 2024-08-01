@@ -92,15 +92,68 @@ async def transform_dataset(
         if not transformation_input.sort_params:
             raise HTTPException(status_code=400, detail="Sort parameters are required for sort operation")
         
-        column = transformation_input.sort_params.column
+        column = transformation_input.sort_params.column 
         ascending = transformation_input.sort_params.ascending
 
         df = df.sort_values(by=column, ascending=ascending)
 
+    elif transformation_input.operation_type == 'addRow':
+        if not transformation_input.row_params:
+            raise HTTPException(status_code = 400, detail="please privide index where row has to be added")
+        
+        index = transformation_input.row_params.index
+
+        if index < 0 or index > len(df):
+            raise ValueError("Index out of range")
+    
+        # Create a DataFrame with one row of None values
+        new_row = pd.DataFrame([[" "] * len(df.columns)], columns=df.columns, index=[index]) 
+        # only string with space works, everything else gives error on applying operation twice
+        print("new row and index", new_row, index)
+    
+        # Concatenate the new row with the original DataFrame
+        print("DF BEFORE", df)
+
+        df = pd.concat([df.iloc[:index], new_row, df.iloc[index:]]).reset_index(drop=True)
+        print("DF AFTER", df)
+
+        try:
+            df.to_csv(dataset.file_path, index=False)
+            print("in try block, df changed", df)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+ 
+
+    elif transformation_input.operation_type == 'addCol':
+        if not transformation_input.col_params:
+            raise HTTPException(status_code = 400, detail="please privide index where row has to be added")
+        
+        index = transformation_input.col_params.index
+        if index<0 or index> len(df.columns):
+            raise ValueError("index  is out of bounds")
+        
+
+        column_name = transformation_input.col_params.name
+                                        # replace   None = pd.NA if error starts
+        df = df.insert(index, column_name, None)  
+        
+        try:
+            df.to_csv(dataset.file_path, index=False)
+            print("in try block, df changed", df)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+
+    # for del col - serach col name in dataset, then remove it 
+
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported operation type: {transformation_input.operation_type}")
 
-    result = df.to_dict(orient='records')
+    # result = df.to_dict(orient='records')
+    try:
+        df.to_csv(dataset.file_path, index=False)
+        print("in try block, df changed", df)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
     
     data =  {
         "dataset_id": dataset_id,
