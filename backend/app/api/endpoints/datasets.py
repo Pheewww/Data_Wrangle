@@ -122,7 +122,24 @@ async def transform_dataset(
             print("in try block, df changed", df)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
- 
+
+    elif transformation_input.operation_type == 'delRow':
+        if not transformation_input.row_params:
+            raise HTTPException(status_code = 400, detail="please privide index where row has to be added")
+        
+        index = transformation_input.row_params.index
+
+        if index < 0 or index > len(df):
+            raise ValueError("Index out of range")
+        
+        df = df.drop(index)
+
+        try:
+            df.to_csv(dataset.file_path, index=False)
+            print("in try block, df changed", df)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+    
 
     elif transformation_input.operation_type == 'addCol':
         if not transformation_input.col_params:
@@ -148,16 +165,39 @@ async def transform_dataset(
             raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
 
     # for del col - serach col name in dataset, then remove it 
+    elif transformation_input.operation_type == 'delCol':
+        if not transformation_input.row_params:
+            raise HTTPException(status_code=400, detail="Please provide the name of the column to be deleted")
+    
+        # column_name = transformation_input.col_params.name
+
+        # if column_name not in df.columns:
+        #     raise ValueError("Column not found")
+        index = transformation_input.row_params.index
+
+        if index < 0 or index >= len(df.columns):
+            raise ValueError("Index out of range")
+        
+        column_name = df.columns[index]
+     
+        df.drop(column_name, axis=1, inplace=True)
+
+        try:
+            df.to_csv(dataset.file_path, index=False)
+            print("In try block, df changed", df)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+
 
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported operation type: {transformation_input.operation_type}")
 
     # result = df.to_dict(orient='records')
-    try:
-        df.to_csv(dataset.file_path, index=False)
-        print("in try block, df changed", df)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+    # try:
+    #     df.to_csv(dataset.file_path, index=False)
+    #     print("in try block, df changed", df)
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
     
     data =  {
         "dataset_id": dataset_id,
