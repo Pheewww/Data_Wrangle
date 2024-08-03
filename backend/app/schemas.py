@@ -16,6 +16,9 @@ class Add_or_Del_Row(BaseModel):
 class Add_or_Del_Column(BaseModel):
     index: int
     name: str
+
+class FillEmptyParams(BaseModel):
+    index: int
  
 class TransformationInput(BaseModel):
     operation_type: str
@@ -23,11 +26,12 @@ class TransformationInput(BaseModel):
     sort_params:Optional[SortParameters] = None
     row_params: Optional[Add_or_Del_Row] = None
     col_params: Optional[Add_or_Del_Column] = None
+    fill_empty_params: Optional[FillEmptyParams] = None 
  
 class BasicQueryResponse(BaseModel):
     dataset_id: int
     operation_type: str
-    row_count: int
+    row_count: int 
     # result: List[Dict[str, Any]]
     columns: list[str]
     rows: list[list]  # Convert dataframe rows to list of lists

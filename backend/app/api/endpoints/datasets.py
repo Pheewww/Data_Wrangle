@@ -127,7 +127,8 @@ async def transform_dataset(
         if not transformation_input.row_params:
             raise HTTPException(status_code = 400, detail="please privide index where row has to be added")
         
-        index = transformation_input.row_params.index
+        index = transformation_input.row_params.index 
+        # row_column because only index is enough to del col
 
         if index < 0 or index > len(df):
             raise ValueError("Index out of range")
@@ -188,6 +189,22 @@ async def transform_dataset(
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
 
+    elif transformation_input.operation_type == 'fillEmpty':
+        if not transformation_input.fill_empty_params:
+            raise HTTPException(status_code=400, detail="Please provide the values that has to be filled")
+        
+        df = pd.read_csv(dataset.file_path, na_values=[' ', '']) 
+        
+        value = transformation_input.fill_empty_params.index 
+
+        # implement forward and backward fill
+        df.fillna(value, inplace=True)
+
+        try:
+            df.to_csv(dataset.file_path, index=False)
+            print("In try block, df changed", df)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
 
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported operation type: {transformation_input.operation_type}")
