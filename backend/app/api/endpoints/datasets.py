@@ -253,16 +253,20 @@ async def Complextransform(
         if not transformation_input.drop_duplicate:
             raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
         
+        # multiple column from input is left -> 
         column= transformation_input.drop_duplicate.columns
+        split_col_value = column.split(',')
         keep = transformation_input.drop_duplicate.keep
 
-        print(f"Applying drop duplicates on column: {column}, keep: {keep}")
+        print(f"Applying drop duplicates on column, split and keep->: {split_col_value}, keep: {keep}")
 
-        if column not in df.columns:
-            raise HTTPException(status_code=400, detail=f"Column {column} not found in dataset")
+       # Check if all columns in split_col_value exist in df.columns
+        if not all(col in df.columns for col in split_col_value):
+            missing_columns = [col for col in split_col_value if col not in df.columns]
+            raise HTTPException(status_code=400, detail=f"Columns {missing_columns} not found in dataset")
+
+        df.drop_duplicates(subset=split_col_value, keep=keep, inplace=True)
         
-
-        df.drop_duplicates(subset=column, keep=keep, inplace=True)
 
         save_dataframe_to_csv(df, dataset.file_path)
 
