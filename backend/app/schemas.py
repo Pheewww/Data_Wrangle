@@ -1,6 +1,9 @@
 from pydantic import BaseModel
-from typing import Optional
+from enum import Enum
+from typing import Optional, Union
 
+
+# Basic Functions
 class FilterParameters(BaseModel):
     column: str
     condition: str
@@ -19,6 +22,19 @@ class Add_or_Del_Column(BaseModel):
 
 class FillEmptyParams(BaseModel):
     index: int
+
+
+# Complex Functions
+
+class DropDup(str, Enum):
+    first = 'first'
+    last = 'last'
+     
+class DropDuplicates(BaseModel):
+    columns: str
+    keep: Union[DropDup, bool]
+
+
  
 class TransformationInput(BaseModel):
     operation_type: str
@@ -27,6 +43,7 @@ class TransformationInput(BaseModel):
     row_params: Optional[Add_or_Del_Row] = None
     col_params: Optional[Add_or_Del_Column] = None
     fill_empty_params: Optional[FillEmptyParams] = None 
+    drop_duplicate: Optional[DropDuplicates] = None
  
 class BasicQueryResponse(BaseModel):
     dataset_id: int

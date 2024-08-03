@@ -20,6 +20,16 @@ def create_dataset(db: Session, filename: str, file_path: str ):
 def get_dataset(db: Session, dataset_id: int):
     return db.query(models.Dataset).filter(models.Dataset.dataset_id == dataset_id).first()
 
+# function to save changes in db
+
+def save_dataframe_to_csv(df: pd.DataFrame, file_path: str):
+    """Saves the DataFrame to a CSV file and handles potential errors."""
+    try:
+        df.to_csv(file_path, index=False)
+        print("In try block, df changed", df)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+
 # API Routes
 @router.post("/upload", response_model=schemas.DatasetResponse)
 async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(database.get_db)):
@@ -208,13 +218,6 @@ async def transform_dataset(
 
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported operation type: {transformation_input.operation_type}")
-
-    # result = df.to_dict(orient='records')
-    # try:
-    #     df.to_csv(dataset.file_path, index=False)
-    #     print("in try block, df changed", df)
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
     
     data =  {
         "dataset_id": dataset_id,
@@ -227,4 +230,125 @@ async def transform_dataset(
 
     print("msg to frontend", data)
     return data 
+
+
+@router.post("/{dataset_id}/Complextransform", response_model=schemas.BasicQueryResponse)
+async def Complextransform( 
+    dataset_id: int,
+    transformation_input: schemas.TransformationInput,
+    db: Session = Depends(database.get_db)
+): 
+
+    dataset = get_dataset(db, dataset_id)
+    if not dataset:
+        raise HTTPException(status_code=400, detail=f"Dataset with ID not found"
+        )
+    
+    try:
+        df = pd.read_csv(dataset.file_path)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not load dataset from file path {dataset.file_path}: {str(e)}")
+    
+    if transformation_input.operation_type == 'dropDuplicate':
+        if not transformation_input.drop_duplicate:
+            raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
+        
+        column= transformation_input.drop_duplicate.columns
+        keep = transformation_input.drop_duplicate.keep
+
+        print(f"Applying drop duplicates on column: {column}, keep: {keep}")
+
+        if column not in df.columns:
+            raise HTTPException(status_code=400, detail=f"Column {column} not found in dataset")
+        
+
+        df.drop_duplicates(subset=column, keep=keep, inplace=True)
+
+        save_dataframe_to_csv(df, dataset.file_path)
+
+
+    data =  {
+        "dataset_id": dataset_id,
+        "operation_type": transformation_input.operation_type,
+        # "result": result,
+        "row_count": len(df),
+        "columns": df.columns.tolist(),
+        "rows": df.values.tolist()  # Convert dataframe rows to list of lists
+        }
+
+    print("msg to frontend from complex api", data)
+    return data 
  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# @router.post("/upload", response_model=schemas.DatasetResponse)
+# async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(database.get_db)):
+#     # Upload logic
+
+# @router.post("/{dataset_id}/filter", response_model=schemas.BasicQueryResponse)
+# async def filter_dataset(
+#     dataset_id: int,
+#     filter_params: schemas.FilterParameters,
+#     db: Session = Depends(database.get_db)
+# ):
+#     # Filter logic
+
+# @router.post("/{dataset_id}/sort", response_model=schemas.BasicQueryResponse)
+# async def sort_dataset(
+#     dataset_id: int,
+#     sort_params: schemas.SortParameters,
+#     db: Session = Depends(database.get_db)
+# ):
+#     # Sort logic
+
+# @router.post("/{dataset_id}/add_row", response_model=schemas.BasicQueryResponse)
+# async def add_row_to_dataset(
+#     dataset_id: int,
+#     row_params: schemas.RowParameters,
+#     db: Session = Depends(database.get_db)
+# ):
+#     # Add row logic
+
+# @router.post("/{dataset_id}/delete_row", response_model=schemas.BasicQueryResponse)
+# async def delete_row_from_dataset(
+#     dataset_id: int,
+#     row_params: schemas.RowParameters,
+#     db: Session = Depends(database.get_db)
+# ):
+#     # Delete row logic
+
+# @router.post("/{dataset_id}/add_column", response_model=schemas.BasicQueryResponse)
+# async def add_column_to_dataset(
+#     dataset_id: int,
+#     col_params: schemas.ColParameters,
+#     db: Session = Depends(database.get_db)
+# ):
+#     # Add column logic
+
+# @router.post("/{dataset_id}/delete_column", response_model=schemas.BasicQueryResponse)
+# async def delete_column_from_dataset(
+#     dataset_id: int,
+#     col_params: schemas.ColParameters,
+#     db: Session = Depends(database.get_db)
+# ):
+#     # Delete column logic
+
+# @router.post("/{dataset_id}/fill_empty", response_model=schemas.BasicQueryResponse)
+# async def fill_empty_in_dataset(
+#     dataset_id: int,
+#     fill_params: schemas.FillEmptyParameters,
+#     db: Session = Depends(database.get_db)
+# ):
+#     # Fill empty logic
