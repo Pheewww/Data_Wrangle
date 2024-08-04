@@ -127,11 +127,7 @@ async def transform_dataset(
         df = pd.concat([df.iloc[:index], new_row, df.iloc[index:]]).reset_index(drop=True)
         print("DF AFTER", df)
 
-        try:
-            df.to_csv(dataset.file_path, index=False)
-            print("in try block, df changed", df)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+        save_dataframe_to_csv(df, dataset.file_path)
 
     elif transformation_input.operation_type == 'delRow':
         if not transformation_input.row_params:
@@ -145,11 +141,7 @@ async def transform_dataset(
         
         df = df.drop(index)
 
-        try:
-            df.to_csv(dataset.file_path, index=False)
-            print("in try block, df changed", df)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+        save_dataframe_to_csv(df, dataset.file_path)
     
 
     elif transformation_input.operation_type == 'addCol':
@@ -169,11 +161,7 @@ async def transform_dataset(
         print("DF After ", df)
 
         
-        try:
-            df.to_csv(dataset.file_path, index=False)
-            print("in try block, df changed", df)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+        save_dataframe_to_csv(df, dataset.file_path)
 
     # for del col - serach col name in dataset, then remove it 
     elif transformation_input.operation_type == 'delCol':
@@ -193,11 +181,7 @@ async def transform_dataset(
      
         df.drop(column_name, axis=1, inplace=True)
 
-        try:
-            df.to_csv(dataset.file_path, index=False)
-            print("In try block, df changed", df)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+        save_dataframe_to_csv(df, dataset.file_path)
 
     elif transformation_input.operation_type == 'fillEmpty':
         if not transformation_input.fill_empty_params:
@@ -207,14 +191,11 @@ async def transform_dataset(
         
         value = transformation_input.fill_empty_params.index 
 
+        # if you need name instead index, find column name using df as array that has index
         # implement forward and backward fill
         df.fillna(value, inplace=True)
 
-        try:
-            df.to_csv(dataset.file_path, index=False)
-            print("In try block, df changed", df)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
+        save_dataframe_to_csv(df, dataset.file_path)
 
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported operation type: {transformation_input.operation_type}")
@@ -241,8 +222,7 @@ async def Complextransform(
 
     dataset = get_dataset(db, dataset_id)
     if not dataset:
-        raise HTTPException(status_code=400, detail=f"Dataset with ID not found"
-        )
+        raise HTTPException(status_code=400, detail=f"Dataset with ID not found")
     
     try:
         df = pd.read_csv(dataset.file_path)
@@ -253,7 +233,7 @@ async def Complextransform(
         if not transformation_input.drop_duplicate:
             raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
         
-        # multiple column from input is left -> 
+        # multiple column from input is left -> done
         column= transformation_input.drop_duplicate.columns
         split_col_value = column.split(',')
         keep = transformation_input.drop_duplicate.keep
@@ -269,6 +249,19 @@ async def Complextransform(
         
 
         save_dataframe_to_csv(df, dataset.file_path)
+
+    if transformation_input.operation_type == 'advQuery':
+        if not transformation_input.adv_query:
+            raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
+        
+        query_string= transformation_input.adv_query.query
+
+        print(f"Applying Adv Query on column, advQuery String->: {query_string}")
+
+        
+        df.query(query_string)
+        
+        # HOW TO RETURN - this returns a new dataset - maybe show it in model?
 
 
     data =  {

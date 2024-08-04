@@ -34,6 +34,22 @@ class DropDuplicates(BaseModel):
     columns: str
     keep: Union[DropDup, bool]
 
+class AdvQuery(BaseModel):
+    query: str
+
+class AggFunc(str, Enum):
+    sum = 'sum'
+    mean = 'mean'
+    min = 'min'
+    max = 'max'
+    count = 'count'
+class Pivot(BaseModel):
+    index: str
+    column: str
+    value: str
+    aggfun: AggFunc
+
+
 
  
 class TransformationInput(BaseModel):
@@ -44,6 +60,7 @@ class TransformationInput(BaseModel):
     col_params: Optional[Add_or_Del_Column] = None
     fill_empty_params: Optional[FillEmptyParams] = None 
     drop_duplicate: Optional[DropDuplicates] = None
+    adv_query: Optional[AdvQuery] = None
  
 class BasicQueryResponse(BaseModel):
     dataset_id: int

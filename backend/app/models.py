@@ -71,7 +71,7 @@ class Dataset(Base):
 # Dataset.change_logs = relationship("DatasetChangeLog", order_by=Datas  etChangeLog.change_log_id, back_populates="dataset")
 
 # Create engine and session
-engine = create_engine('postgresql://neondb_owner:JbeN8KE7oFWw@ep-empty-feather-a78026sj.ap-southeast-2.aws.neon.tech/neondb?sslmode=require')
+engine = create_engine('postgresql://neondb_owner:tIPBfYT96rHy@ep-snowy-tree-a7zqdg5s.ap-southeast-2.aws.neon.tech/neondb?sslmode=require')
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
