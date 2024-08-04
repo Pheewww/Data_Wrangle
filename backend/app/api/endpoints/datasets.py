@@ -250,7 +250,8 @@ async def Complextransform(
 
         save_dataframe_to_csv(df, dataset.file_path)
 
-    if transformation_input.operation_type == 'advQuery':
+    # HOW TO SHOW BELOW ON FRONTEND? 
+    if transformation_input.operation_type == 'advQueryFilter':
         if not transformation_input.adv_query:
             raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
         
@@ -258,10 +259,32 @@ async def Complextransform(
 
         print(f"Applying Adv Query on column, advQuery String->: {query_string}")
 
+        # HOW TO RETURN - this returns a new dataset - maybe show it in model?        
+        df = df.query(query_string)
         
-        df.query(query_string)
+
+    if transformation_input.operation_type == 'pivotTables':
+        if not transformation_input.pivot_query:
+            raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
         
-        # HOW TO RETURN - this returns a new dataset - maybe show it in model?
+        index = transformation_input.pivot_query.index
+        column = transformation_input.pivot_query.column
+        value = transformation_input.pivot_query.value
+        aggfun = transformation_input.pivot_query.aggfun
+        print(f"Applying Pivot Tables on column, Pivot tables on String->: {index}, {column}, {value}, {aggfun}")
+
+        split_col_value = index.split(',')
+         # Check if all columns in split_col_value exist in df.columns
+        if not all(col in df.columns for col in split_col_value):
+            missing_columns = [col for col in split_col_value if col not in df.columns]
+            raise HTTPException(status_code=400, detail=f"Columns {missing_columns} not found in dataset")
+        
+        # Apply the pivot table transformation
+        try:
+            df = pd.pivot_table(df, index=split_col_value, values=value, columns=column, aggfunc=aggfun)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error applying pivot table: {str(e)}")
+        
 
 
     data =  {

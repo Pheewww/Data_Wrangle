@@ -61,6 +61,7 @@ class TransformationInput(BaseModel):
     fill_empty_params: Optional[FillEmptyParams] = None 
     drop_duplicate: Optional[DropDuplicates] = None
     adv_query: Optional[AdvQuery] = None
+    pivot_query: Optional[Pivot] = None
  
 class BasicQueryResponse(BaseModel):
     dataset_id: int
