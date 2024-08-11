@@ -1,7 +1,8 @@
 // HomeScreen.js
 import   { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; 
+//import axios from "axios"; 
+import { uploadDataset } from "../api/datasetApi";
 
 
 const HomeScreen = () => {
@@ -31,24 +32,26 @@ const HomeScreen = () => {
     formData.append("projectName", projectName);
     formData.append("projectDescription", projectDescription);
 
-    try {
-      const response = await axios.post(
-        "http://localhost:8000/datasets/upload",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      // Navigate to the data screen with the API response data
-      navigate("/data", { state: { apiData: response.data } });
-      console.log("goign to data screen", response.data);
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      alert("Error uploading file. Please try again.");
-    }
+    // try {
+    //   const response = await axios.post(
+    //     "http://localhost:8000/datasets/upload",
+    //     formData,
+    //     {
+    //       headers: {
+    //         "Content-Type": "multipart/form-data",
+    //       },
+    //     }
+    //   );
+ try {
+   const data = await uploadDataset(fileUpload);
+   console.log("Dataset received:", data); // Ensure this logs the correct data
+   // Navigate to the data screen with the API response data
+   navigate("/data", { state: { apiData: data } });
+   console.log("goign to data screen", data);
+ } catch (error) {
+   console.error("Error uploading file:", error);
+   alert("Error uploading file. Please try again.");
+ }
 
     setShowModal(false);
   };
