@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Query
 from sqlalchemy.orm import Session
 from app import models, schemas, database
 import pandas as pd
@@ -517,9 +517,55 @@ async def save_dataset(dataset_id: int, commit_message: str, db: Session = Depen
     }
     return data
 
-# New endpoint to revert to a checkpoint
+# # New endpoint to revert to a checkpoint
+# @router.post("/{dataset_id}/revert", response_model=schemas.DatasetResponse)
+# async def revert_to_checkpoint(dataset_id: int, checkpoint_id: int, db: Session = Depends(database.get_db)):
+#     dataset = get_dataset(db, dataset_id)
+#     if not dataset:
+#         raise HTTPException(status_code=404, detail=f"Dataset with ID {dataset_id} not found")
+
+#     # Load the original dataset
+#     original_path = dataset.file_path.replace('_copy.csv', '.csv')
+#     df = pd.read_csv(original_path)
+
+#     # Get all applied logs  to the checkpoint
+#     logs = db.query(models.DatasetChangeLog).filter(
+#         models.DatasetChangeLog.dataset_id == dataset_id,
+#         models.DatasetChangeLog.applied == True,
+#         models.DatasetChangeLog.checkpoint_id <= checkpoint_id
+#     ).order_by(models.DatasetChangeLog.timestamp).all()
+
+#     # Apply all transformations 
+#     for log in logs:
+#         df = apply_transformation(df, log.action_type, log.action_details)
+
+   
+#     save_dataframe_to_csv(df, dataset.file_path)
+
+#     #  logs after the checkpoint as unapplied
+#     db.query(models.DatasetChangeLog).filter(
+#         models.DatasetChangeLog.dataset_id == dataset_id,
+#         models.DatasetChangeLog.checkpoint_id > checkpoint_id
+#     ).update({models.DatasetChangeLog.applied: False})
+
+#     db.commit()
+
+#     data = {
+#         "filename": dataset.name,
+#         "file_path": dataset.file_path,
+#         "dataset_id": dataset.dataset_id,
+#         "columns": df.columns.tolist(),
+#         "row_count": len(df),
+#         "rows": df.values.tolist()
+#     }
+#     return data
+ 
+
+
+
+
 @router.post("/{dataset_id}/revert", response_model=schemas.DatasetResponse)
-async def revert_to_checkpoint(dataset_id: int, checkpoint_id: int, db: Session = Depends(database.get_db)):
+async def revert_to_checkpoint(dataset_id: int, checkpoint_id: int = Query(...), db: Session = Depends(database.get_db)):
     dataset = get_dataset(db, dataset_id)
     if not dataset:
         raise HTTPException(status_code=404, detail=f"Dataset with ID {dataset_id} not found")
@@ -539,10 +585,9 @@ async def revert_to_checkpoint(dataset_id: int, checkpoint_id: int, db: Session 
     for log in logs:
         df = apply_transformation(df, log.action_type, log.action_details)
 
-   
     save_dataframe_to_csv(df, dataset.file_path)
 
-    #  logs after the checkpoint as unapplied
+    # Mark logs after the checkpoint as unapplied
     db.query(models.DatasetChangeLog).filter(
         models.DatasetChangeLog.dataset_id == dataset_id,
         models.DatasetChangeLog.checkpoint_id > checkpoint_id
@@ -559,15 +604,3 @@ async def revert_to_checkpoint(dataset_id: int, checkpoint_id: int, db: Session 
         "rows": df.values.tolist()
     }
     return data
- 
-
-
-
-
-
-
-
-
-
-
- 

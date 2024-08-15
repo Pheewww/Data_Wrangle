@@ -49,7 +49,8 @@ class Pivot(BaseModel):
     column: str
     value: str
     aggfun: AggFunc
-
+class RevertRequest(BaseModel):
+    checkpoint_id: int
 
 # USER LOGS
 

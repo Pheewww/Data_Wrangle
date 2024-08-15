@@ -21,13 +21,22 @@ export const complexTransformDataset = (datasetId, transformationInput) => {
 };
 
 export const saveDataset = (datasetId, commitMessage) => {
-    return API.post(`/${datasetId}/save`, { commit_message: commitMessage });
+    return API.post(`/datasets/1/save?commit_message=${encodeURIComponent(commitMessage)}`);
 };
 
 export const revertToCheckpoint = (datasetId, checkpointId) => {
-    return API.post(`/${datasetId}/revert`, { checkpoint_id: checkpointId });
+    return API.post(`/datasets/1/revert?checkpoint_id=${checkpointId}`);
 };
 
+
+// export const getLogs = (datasetId) => {
+//     return API.get(`/${datasetId}/logs`);
+// };
+
 export const getLogs = (datasetId) => {
-    return API.get(`/${datasetId}/logs`);
+    return API.get(`/logs/1`);
+};
+
+export const getCheckpoints = (datasetId) => {
+    return API.get(`/logs/checkpoints/1`);
 };

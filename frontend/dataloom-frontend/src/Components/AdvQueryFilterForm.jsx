@@ -30,7 +30,7 @@ const AdvQueryFilterForm = ({ onClose }) => {
   };
 
   return (
-    <div className="p-4 border border-green-500 rounded bg-gray-200 text-black">
+    <div className="p-4 border border-green-500 rounded bg-gray-100 text-black">
       <form onSubmit={handleSubmit}>
         <h3 className="font-bold mb-2">Advanced Query</h3>
         <div className="mb-2">
