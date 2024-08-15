@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { transformDataset, complexTransformDataset } from "../api";
 import proptypes from "prop-types";
 
-const Table = ({ datasetId }) => {
+const Table = ({ datasetId, data: externalData }) => {
   const location = useLocation();
   const [data, setData] = useState([]);
   const [columns, setColumns] = useState([]);
@@ -28,6 +28,14 @@ const Table = ({ datasetId }) => {
       setData(rows.map((row, index) => [index + 1, ...Object.values(row)]));
     }
   }, [location.state]);
+
+  useEffect(() => {
+    if (externalData) {
+      const { columns, rows } = externalData;
+      setColumns(["S.No.", ...columns]);
+      setData(rows.map((row, index) => [index + 1, ...Object.values(row)]));
+    }
+  }, [externalData]);
 
   const handleAddRow = async (index) => {
     console.log("In Table -> in handleaddrow = Adding row at index:", index);
@@ -323,6 +331,10 @@ const Table = ({ datasetId }) => {
 
 Table.propTypes = {
   datasetId: proptypes.string.isRequired,
+  data: proptypes.shape({
+    columns: proptypes.arrayOf(proptypes.string),
+    rows: proptypes.arrayOf(proptypes.arrayOf(proptypes.string)),
+  }),
 };
 
 export default Table;

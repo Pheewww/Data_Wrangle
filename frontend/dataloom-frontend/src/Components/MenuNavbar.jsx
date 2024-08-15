@@ -308,21 +308,88 @@
 // export default Menu_NavBar;
 
 // NavBar.js
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FilterForm from "./FilterForm";
 import SortForm from "./SortForm";
-import DropDuplicateForm from "./DropDuplicateForm";  // Import DropDuplicateForm component
-import AdvQueryFilterForm from "./AdvQueryFilterForm";  // Import AdvQueryFilterForm component
-import PivotTableForm from "./PivotTableForm";  // Import PivotTableForm component
+import DropDuplicateForm from "./DropDuplicateForm";
+import AdvQueryFilterForm from "./AdvQueryFilterForm";
+import PivotTableForm from "./PivotTableForm";
+import LogsTable from "./LogsTable"; // Import LogsTable component
+import CheckpointsTable from "./CheckpointsTable"; // Import CheckpointsTable component
+import {
+  saveDataset,
+  getLogs,
+  getCheckpoints,
+  revertToCheckpoint,
+} from "../api"; // Import API functions
+import proptype from "prop-types";
 
-
-const Menu_NavBar = () => {
+const Menu_NavBar = ({ datasetId, onTransform }) => {
   const [activeTab, setActiveTab] = useState("Home");
   const [showFilterForm, setShowFilterForm] = useState(false);
   const [showSortForm, setShowSortForm] = useState(false);
   const [showDropDuplicateForm, setShowDropDuplicateForm] = useState(false);
   const [showAdvQueryFilterForm, setShowAdvQueryFilterForm] = useState(false);
   const [showPivotTableForm, setShowPivotTableForm] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
+  const [showCheckpoints, setShowCheckpoints] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [checkpoints, setCheckpoints] = useState([]);
+
+  useEffect(() => {
+    if (showLogs) {
+      fetchLogs();
+    }
+    if (showCheckpoints) {
+      fetchCheckpoints();
+    }
+  }, [showLogs, showCheckpoints]);
+
+  const fetchLogs = async () => {
+    try {
+      const logsResponse = await getLogs(datasetId);
+      setLogs(logsResponse.data);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+    }
+  };
+
+  const fetchCheckpoints = async () => {
+    try {
+      const checkpointsResponse = await getCheckpoints(datasetId);
+      setCheckpoints(checkpointsResponse.data);
+    } catch (error) {
+      console.error("Error fetching checkpoints:", error);
+    }
+  };
+
+  const handleSave = async () => {
+    const commitMessage = prompt("Enter a commit message for this save:");
+    if (commitMessage) {
+      try {
+        const response = await saveDataset(datasetId, commitMessage);
+        console.log("Save response:", response.data);
+        alert("Dataset saved successfully!");
+      } catch (error) {
+        console.error("Error saving dataset:", error);
+        alert("Failed to save dataset.");
+      }
+    }
+  };
+
+  const handleRevert = async (checkpointId) => {
+    if (window.confirm("Are you sure you want to revert to this checkpoint?")) {
+      try {
+        const response = await revertToCheckpoint(datasetId, checkpointId);
+        console.log("Revert response:", response.data);
+        onTransform(response.data); // Update table with reverted data
+        alert("Dataset reverted successfully!");
+      } catch (error) {
+        console.error("Error reverting dataset:", error);
+        alert("Failed to revert dataset.");
+      }
+    }
+  };
 
   const menuOptions = {
     File: [
@@ -338,6 +405,8 @@ const Menu_NavBar = () => {
               setShowDropDuplicateForm(false);
               setShowAdvQueryFilterForm(false);
               setShowPivotTableForm(false);
+              setShowLogs(false);
+              setShowCheckpoints(false);
             },
           },
           {
@@ -349,12 +418,42 @@ const Menu_NavBar = () => {
               setShowDropDuplicateForm(false);
               setShowAdvQueryFilterForm(false);
               setShowPivotTableForm(false);
+              setShowLogs(false);
+              setShowCheckpoints(false);
             },
           },
           { name: "Join Dataset", icon: "📌" },
-          { name: "Delete Dataset", icon: "✂️" },
-          { name: "Upload Dataset", icon: "📤" },
-          { name: "Download Dataset", icon: "📥" },
+          {
+            name: "Save Dataset",
+            icon: "📤",
+            onClick: handleSave,
+          },
+          {
+            name: "View Logs",
+            icon: "📥",
+            onClick: () => {
+              setShowLogs(true);
+              setShowFilterForm(false);
+              setShowSortForm(false);
+              setShowDropDuplicateForm(false);
+              setShowAdvQueryFilterForm(false);
+              setShowPivotTableForm(false);
+              setShowCheckpoints(false);
+            },
+          },
+          {
+            name: "View Checkpoints",
+            icon: "🕒",
+            onClick: () => {
+              setShowCheckpoints(true);
+              setShowLogs(false);
+              setShowFilterForm(false);
+              setShowSortForm(false);
+              setShowDropDuplicateForm(false);
+              setShowAdvQueryFilterForm(false);
+              setShowPivotTableForm(false);
+            },
+          },
         ],
       },
       {
@@ -657,7 +756,11 @@ const Menu_NavBar = () => {
       )}
       {showSortForm && <SortForm onClose={() => setShowSortForm(false)} />}
       {showDropDuplicateForm && (
-        <DropDuplicateForm onClose={() => setShowDropDuplicateForm(false)} />
+        <DropDuplicateForm
+          datasetId={datasetId}
+          onClose={() => setShowDropDuplicateForm(false)}
+          onTransform={onTransform}
+        />
       )}
       {showAdvQueryFilterForm && (
         <AdvQueryFilterForm onClose={() => setShowAdvQueryFilterForm(false)} />
@@ -665,8 +768,21 @@ const Menu_NavBar = () => {
       {showPivotTableForm && (
         <PivotTableForm onClose={() => setShowPivotTableForm(false)} />
       )}
+      {showLogs && <LogsTable logs={logs} onClose={() => setShowLogs(false)} />}
+      {showCheckpoints && (
+        <CheckpointsTable
+          checkpoints={checkpoints}
+          onClose={() => setShowCheckpoints(false)}
+          onRevert={handleRevert}
+        />
+      )}
     </div>
   );
+};
+
+Menu_NavBar.propTypes = {
+  datasetId: proptype.number.isRequired,
+  onTransform: proptype.func.isRequired,
 };
 
 export default Menu_NavBar;

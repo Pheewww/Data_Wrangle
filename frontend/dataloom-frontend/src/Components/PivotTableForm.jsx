@@ -32,7 +32,7 @@ const PivotTableForm = ({ onClose }) => {
   };
 
   return (
-    <div className="p-4 border border-green-500 rounded bg-gray-200 text-black">
+    <div className="p-4 border border-green-500 rounded bg-gray-100 text-black">
       <form onSubmit={handleSubmit}>
         <h3 className="font-bold mb-2">Pivot Table</h3>
         <div className="flex space-x-2 mb-4">

@@ -94,7 +94,7 @@ class Checkpoint(Base):
 # Dataset.user_logs = relationship("DatasetChangeLog", order_by=Datas  etChangeLog.change_log_id, back_populates="dataset")
 
 # Create engine and session
-engine = create_engine('postgresql://neondb_owner:M7nxpXBAJS5D@ep-small-star-a7zw4223.ap-southeast-2.aws.neon.tech/neondb?sslmode=require')
+engine = create_engine('postgresql://neondb_owner:TEK48fSiJBzb@ep-odd-mouse-a74exe59.ap-southeast-2.aws.neon.tech/neondb?sslmode=require')
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
