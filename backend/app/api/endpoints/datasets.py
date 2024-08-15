@@ -46,6 +46,15 @@ def save_dataframe_to_csv(df: pd.DataFrame, file_path: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving updated dataset: {str(e)}")
 
+
+# Add a function to determine the data type of a column
+def get_column_type(df: pd.DataFrame, column: str) -> str:
+    dtype = df[column].dtype
+    if pd.api.types.is_string_dtype(dtype):
+        return 'string'
+    elif pd.api.types.is_numeric_dtype(dtype):
+        return 'numeric'
+    return 'unknown'
 # CRUD Functions ---------------------------------------
 
 
@@ -104,6 +113,17 @@ async def transform_dataset(
         column = transformation_input.parameters.column
         condition = transformation_input.parameters.condition
         value = transformation_input.parameters.value
+
+         # Determine the data type of the column
+        column_type = get_column_type(df, column)
+
+        # Convert value based on column type
+        if column_type == 'numeric':
+            try:
+                value = float(value)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid value for numeric column: {value}")
+        
 
         print("col, cond, and value ->", column, condition, value) 
 
@@ -246,92 +266,176 @@ async def transform_dataset(
     return data 
 
 
+# @router.post("/{dataset_id}/Complextransform", response_model=schemas.BasicQueryResponse)
+# async def Complextransform( 
+#     dataset_id: int,
+#     transformation_input: schemas.TransformationInput,
+#     db: Session = Depends(database.get_db)
+# ): 
+
+#     dataset = get_dataset(db, dataset_id)
+#     if not dataset:
+#         raise HTTPException(status_code=400, detail=f"Dataset with ID not found")
+    
+#     try:
+#         df = pd.read_csv(dataset.file_path)
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=f"Could not load dataset from file path {dataset.file_path}: {str(e)}")
+    
+#     if transformation_input.operation_type == 'dropDuplicate':
+#         if not transformation_input.drop_duplicate:
+#             raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
+        
+#         # multiple column from input is left -> done
+#         column= transformation_input.drop_duplicate.columns
+#         split_col_value = column.split(',')
+#         keep = transformation_input.drop_duplicate.keep
+
+#         print(f"Applying drop duplicates on column, split and keep->: {split_col_value}, keep: {keep}")
+
+#        # Check if all columns in split_col_value exist in df.columns
+#         if not all(col in df.columns for col in split_col_value):
+#             missing_columns = [col for col in split_col_value if col not in df.columns]
+#             raise HTTPException(status_code=400, detail=f"Columns {missing_columns} not found in dataset")
+
+#         df.drop_duplicates(subset=split_col_value, keep=keep, inplace=True)
+        
+
+#         save_dataframe_to_csv(df, dataset.file_path)
+#         # Log the transformation
+#         log_transformation(db, dataset_id, transformation_input)
+
+#     # HOW TO SHOW BELOW APIs ON FRONTEND? 
+#     if transformation_input.operation_type == 'advQueryFilter':
+#         if not transformation_input.adv_query:
+#             raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
+        
+#         query_string= transformation_input.adv_query.query
+
+#         print(f"Applying Adv Query on column, advQuery String->: {query_string}")
+
+#         df = df.query(query_string)
+        
+
+#     if transformation_input.operation_type == 'pivotTables':
+#         if not transformation_input.pivot_query:
+#             raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
+        
+#         index = transformation_input.pivot_query.index
+#         column = transformation_input.pivot_query.column
+#         value = transformation_input.pivot_query.value
+#         aggfun = transformation_input.pivot_query.aggfun
+#         print(f"Applying Pivot Tables on column, Pivot tables on String->: {index}, {column}, {value}, {aggfun}")
+
+#         split_col_value = index.split(',')
+#          # Check if all columns in split_col_value exist in df.columns
+#         if not all(col in df.columns for col in split_col_value):
+#             missing_columns = [col for col in split_col_value if col not in df.columns]
+#             raise HTTPException(status_code=400, detail=f"Columns {missing_columns} not found in dataset")
+        
+#         # Apply the pivot table transformation
+#         try:
+#             df = pd.pivot_table(df, index=split_col_value, values=value, columns=column, aggfunc=aggfun)
+#         except Exception as e:
+#             raise HTTPException(status_code=500, detail=f"Error applying pivot table: {str(e)}")
+        
+
+
+#     data =  {
+#         "dataset_id": dataset_id,
+#         "operation_type": transformation_input.operation_type,
+#         # "result": result,
+#         "row_count": len(df),
+#         "columns": df.columns.tolist(),
+#         "rows": df.values.tolist()  # Convert dataframe rows to list of lists
+#         }
+
+#     print("msg to frontend from complex api", data)
+#     return data 
+
 @router.post("/{dataset_id}/Complextransform", response_model=schemas.BasicQueryResponse)
-async def Complextransform( 
+async def Complextransform(
     dataset_id: int,
     transformation_input: schemas.TransformationInput,
     db: Session = Depends(database.get_db)
-): 
-
+):
     dataset = get_dataset(db, dataset_id)
     if not dataset:
-        raise HTTPException(status_code=400, detail=f"Dataset with ID not found")
+        raise HTTPException(status_code=400, detail=f"Dataset with ID {dataset_id} not found")
     
     try:
         df = pd.read_csv(dataset.file_path)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Could not load dataset from file path {dataset.file_path}: {str(e)}")
-    
+
+    # Handle 'dropDuplicate' operation
     if transformation_input.operation_type == 'dropDuplicate':
         if not transformation_input.drop_duplicate:
-            raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
+            raise HTTPException(status_code=400, detail="Drop Duplicate parameters not provided")
         
-        # multiple column from input is left -> done
-        column= transformation_input.drop_duplicate.columns
-        split_col_value = column.split(',')
+        columns = transformation_input.drop_duplicate.columns
+        split_col_value = columns.split(',')
         keep = transformation_input.drop_duplicate.keep
 
-        print(f"Applying drop duplicates on column, split and keep->: {split_col_value}, keep: {keep}")
+        print(f"Applying drop duplicates on columns: {split_col_value}, keep: {keep}")
 
-       # Check if all columns in split_col_value exist in df.columns
         if not all(col in df.columns for col in split_col_value):
             missing_columns = [col for col in split_col_value if col not in df.columns]
             raise HTTPException(status_code=400, detail=f"Columns {missing_columns} not found in dataset")
 
         df.drop_duplicates(subset=split_col_value, keep=keep, inplace=True)
-        
-
         save_dataframe_to_csv(df, dataset.file_path)
-        # Log the transformation
         log_transformation(db, dataset_id, transformation_input)
 
-    # HOW TO SHOW BELOW APIs ON FRONTEND? 
-    if transformation_input.operation_type == 'advQueryFilter':
+    # Handle 'advQueryFilter' operation
+    elif transformation_input.operation_type == 'advQueryFilter':
         if not transformation_input.adv_query:
-            raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
+            raise HTTPException(status_code=400, detail="Advanced Query parameter not provided")
         
-        query_string= transformation_input.adv_query.query
+        query_string = transformation_input.adv_query.query
+        print(f"Applying Advanced Query: {query_string}")
 
-        print(f"Applying Adv Query on column, advQuery String->: {query_string}")
+        # Ensure column names are properly escaped in the query
+        try:
+            df = df.query(query_string)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error applying query '{query_string}': {str(e)}")
 
-        df = df.query(query_string)
-        
-
-    if transformation_input.operation_type == 'pivotTables':
+    # Handle 'pivotTables' operation
+    elif transformation_input.operation_type == 'pivotTables':
         if not transformation_input.pivot_query:
-            raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
+            raise HTTPException(status_code=400, detail="Pivot Table parameters not provided")
         
         index = transformation_input.pivot_query.index
         column = transformation_input.pivot_query.column
         value = transformation_input.pivot_query.value
         aggfun = transformation_input.pivot_query.aggfun
-        print(f"Applying Pivot Tables on column, Pivot tables on String->: {index}, {column}, {value}, {aggfun}")
+        print(f"Applying Pivot Table with index: {index}, column: {column}, value: {value}, aggregation function: {aggfun}")
 
         split_col_value = index.split(',')
-         # Check if all columns in split_col_value exist in df.columns
         if not all(col in df.columns for col in split_col_value):
             missing_columns = [col for col in split_col_value if col not in df.columns]
             raise HTTPException(status_code=400, detail=f"Columns {missing_columns} not found in dataset")
-        
-        # Apply the pivot table transformation
+
         try:
             df = pd.pivot_table(df, index=split_col_value, values=value, columns=column, aggfunc=aggfun)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error applying pivot table: {str(e)}")
-        
 
-
-    data =  {
-        "dataset_id": dataset_id,
-        "operation_type": transformation_input.operation_type,
-        # "result": result,
-        "row_count": len(df),
-        "columns": df.columns.tolist(),
-        "rows": df.values.tolist()  # Convert dataframe rows to list of lists
+    # Prepare response
+    try:
+        data = {
+            "dataset_id": dataset_id,
+            "operation_type": transformation_input.operation_type,
+            "row_count": len(df),
+            "columns": df.columns.tolist(),  # Ensure columns are strings
+            "rows": df.astype(str).values.tolist()  # Ensure all values are strings
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error preparing response data: {str(e)}")
 
-    print("msg to frontend from complex api", data)
-    return data 
+    print("Response to frontend:", data)
+    return data
 
 
 
