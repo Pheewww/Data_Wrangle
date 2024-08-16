@@ -391,6 +391,45 @@ const Menu_NavBar = ({ datasetId, onTransform }) => {
     }
   };
 
+  // General function to handle menu clicks
+  const handleMenuClick = (formType) => {
+    // Reset all states to false
+    setShowFilterForm(false);
+    setShowSortForm(false);
+    setShowDropDuplicateForm(false);
+    setShowAdvQueryFilterForm(false);
+    setShowPivotTableForm(false);
+    setShowLogs(false);
+    setShowCheckpoints(false);
+
+    // Set the specific form type to true
+    switch (formType) {
+      case "FilterForm":
+        setShowFilterForm(true);
+        break;
+      case "SortForm":
+        setShowSortForm(true);
+        break;
+      case "DropDuplicateForm":
+        setShowDropDuplicateForm(true);
+        break;
+      case "AdvQueryFilterForm":
+        setShowAdvQueryFilterForm(true);
+        break;
+      case "PivotTableForm":
+        setShowPivotTableForm(true);
+        break;
+      case "Logs":
+        setShowLogs(true);
+        break;
+      case "Checkpoints":
+        setShowCheckpoints(true);
+        break;
+      default:
+        break;
+    }
+  };
+
   const menuOptions = {
     File: [
       {
@@ -399,30 +438,17 @@ const Menu_NavBar = ({ datasetId, onTransform }) => {
           {
             name: "Filter Dataset",
             icon: "🔍",
-            onClick: () => {
-              setShowFilterForm(true);
-              setShowSortForm(false);
-              setShowDropDuplicateForm(false);
-              setShowAdvQueryFilterForm(false);
-              setShowPivotTableForm(false);
-              setShowLogs(false);
-              setShowCheckpoints(false);
-            },
+            onClick: () => handleMenuClick("FilterForm"),
           },
           {
             name: "Sort Dataset",
             icon: "🔢",
-            onClick: () => {
-              setShowSortForm(true);
-              setShowFilterForm(false);
-              setShowDropDuplicateForm(false);
-              setShowAdvQueryFilterForm(false);
-              setShowPivotTableForm(false);
-              setShowLogs(false);
-              setShowCheckpoints(false);
-            },
+            onClick: () => handleMenuClick("SortForm"),
           },
-          { name: "Join Dataset", icon: "📌" },
+          {
+            name: "Join Dataset",
+            icon: "📌",
+          },
           {
             name: "Save Dataset",
             icon: "📤",
@@ -431,28 +457,12 @@ const Menu_NavBar = ({ datasetId, onTransform }) => {
           {
             name: "View Logs",
             icon: "📥",
-            onClick: () => {
-              setShowLogs(true);
-              setShowFilterForm(false);
-              setShowSortForm(false);
-              setShowDropDuplicateForm(false);
-              setShowAdvQueryFilterForm(false);
-              setShowPivotTableForm(false);
-              setShowCheckpoints(false);
-            },
+            onClick: () => handleMenuClick("Logs"),
           },
           {
             name: "View Checkpoints",
             icon: "🕒",
-            onClick: () => {
-              setShowCheckpoints(true);
-              setShowLogs(false);
-              setShowFilterForm(false);
-              setShowSortForm(false);
-              setShowDropDuplicateForm(false);
-              setShowAdvQueryFilterForm(false);
-              setShowPivotTableForm(false);
-            },
+            onClick: () => handleMenuClick("Checkpoints"),
           },
         ],
       },
@@ -462,35 +472,17 @@ const Menu_NavBar = ({ datasetId, onTransform }) => {
           {
             name: "Drop Duplicate",
             icon: "❌",
-            onClick: () => {
-              setShowDropDuplicateForm(true);
-              setShowSortForm(false);
-              setShowFilterForm(false);
-              setShowAdvQueryFilterForm(false);
-              setShowPivotTableForm(false);
-            },
+            onClick: () => handleMenuClick("DropDuplicateForm"),
           },
           {
             name: "Advanced Query",
             icon: "🧠",
-            onClick: () => {
-              setShowAdvQueryFilterForm(true);
-              setShowSortForm(false);
-              setShowFilterForm(false);
-              setShowDropDuplicateForm(false);
-              setShowPivotTableForm(false);
-            },
+            onClick: () => handleMenuClick("AdvQueryFilterForm"),
           },
           {
             name: "Pivot Tables",
             icon: "📊",
-            onClick: () => {
-              setShowPivotTableForm(true);
-              setShowSortForm(false);
-              setShowFilterForm(false);
-              setShowDropDuplicateForm(false);
-              setShowAdvQueryFilterForm(false);
-            },
+            onClick: () => handleMenuClick("PivotTableForm"),
           },
         ],
       },

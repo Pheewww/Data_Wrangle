@@ -27,10 +27,10 @@ const CheckpointsTable = ({ checkpoints, onClose, onRevert }) => {
               <th className="py-3 px-6 text-left font-semibold text-black">
                 Message
               </th>
-              <th className="py-3 px-6 text-left font-semibold text-gray-800">
+              <th className="py-3 px-6 text-left font-semibold text-black">
                 Created At
               </th>
-              <th className="py-3 px-6 text-center font-semibold text-gray-800">
+              <th className="py-3 px-6 text-center font-semibold text-black">
                 Action
               </th>
             </tr>

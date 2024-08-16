@@ -234,7 +234,7 @@ async def transform_dataset(
         # Log the transformation
         log_transformation(db, dataset_id, transformation_input)
 
-    elif transformation_input.operation_type == 'ChangeCellValue':
+    elif transformation_input.operation_type == 'changeCellValue':
         if not transformation_input.change_cell_value:
             raise HTTPException(status_code=400, detail="Please provide the values that has to be filled")
         
@@ -259,30 +259,25 @@ async def transform_dataset(
         # Log the transformation
         log_transformation(db, dataset_id, transformation_input)
 
-    #     elif transformation_input.operation_type == 'fillEmpty':
-    #     if not transformation_input.fill_empty_params:
-    #         raise HTTPException(status_code=400, detail="Please provide the values that has to be filled")
+    elif transformation_input.operation_type == 'fillEmpty':
+        if not transformation_input.fill_empty_params:
+            raise HTTPException(status_code=400, detail="Please provide the values that have to be filled")
         
-    #     df = pd.read_csv(dataset.file_path, na_values=[' ', '']) 
-        
-    #     # Extracting the value to fill NaNs from the payload
-    #     fill_value = transformation_input.fill_empty_params.fill_value
+        fill_value = transformation_input.fill_empty_params.fill_value
+        column_index = transformation_input.fill_empty_params.index
 
-    # # Extracting the column index (if required)
-    #     column_index = transformation_input.fill_empty_params.index
+        if column_index is not None:
+            # Fill only the specified column
+            if column_index >= len(df.columns) or column_index < 0:
+                raise HTTPException(status_code=400, detail="Column index out of range")
+            column_name = df.columns[column_index]
+            df[column_name] = df[column_name].fillna(fill_value)
+        else:
+            # Fill all columns
+            df = df.fillna(fill_value)
 
-    # # Apply fill operation
-    #     if column_index is not None:
-    #     # If a specific column is to be filled
-    #      column_name = df.columns[column_index]
-    #      df[column_name] = fill_value
-    #     else:
-    #     # Fill all columns if no specific column is provided
-    #         df.fillna(fill_value, inplace=True)
-
-    #     save_dataframe_to_csv(df, dataset.file_path)
-    #     # Log the transformation
-    #     log_transformation(db, dataset_id, transformation_input)
+        save_dataframe_to_csv(df, dataset.file_path)
+        log_transformation(db, dataset_id, transformation_input)
 
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported operation type: {transformation_input.operation_type}")
@@ -301,92 +296,6 @@ async def transform_dataset(
     return data 
 
 
-# @router.post("/{dataset_id}/Complextransform", response_model=schemas.BasicQueryResponse)
-# async def Complextransform( 
-#     dataset_id: int,
-#     transformation_input: schemas.TransformationInput,
-#     db: Session = Depends(database.get_db)
-# ): 
-
-#     dataset = get_dataset(db, dataset_id)
-#     if not dataset:
-#         raise HTTPException(status_code=400, detail=f"Dataset with ID not found")
-    
-#     try:
-#         df = pd.read_csv(dataset.file_path)
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail=f"Could not load dataset from file path {dataset.file_path}: {str(e)}")
-    
-#     if transformation_input.operation_type == 'dropDuplicate':
-#         if not transformation_input.drop_duplicate:
-#             raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
-        
-#         # multiple column from input is left -> done
-#         column= transformation_input.drop_duplicate.columns
-#         split_col_value = column.split(',')
-#         keep = transformation_input.drop_duplicate.keep
-
-#         print(f"Applying drop duplicates on column, split and keep->: {split_col_value}, keep: {keep}")
-
-#        # Check if all columns in split_col_value exist in df.columns
-#         if not all(col in df.columns for col in split_col_value):
-#             missing_columns = [col for col in split_col_value if col not in df.columns]
-#             raise HTTPException(status_code=400, detail=f"Columns {missing_columns} not found in dataset")
-
-#         df.drop_duplicates(subset=split_col_value, keep=keep, inplace=True)
-        
-
-#         save_dataframe_to_csv(df, dataset.file_path)
-#         # Log the transformation
-#         log_transformation(db, dataset_id, transformation_input)
-
-#     # HOW TO SHOW BELOW APIs ON FRONTEND? 
-#     if transformation_input.operation_type == 'advQueryFilter':
-#         if not transformation_input.adv_query:
-#             raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
-        
-#         query_string= transformation_input.adv_query.query
-
-#         print(f"Applying Adv Query on column, advQuery String->: {query_string}")
-
-#         df = df.query(query_string)
-        
-
-#     if transformation_input.operation_type == 'pivotTables':
-#         if not transformation_input.pivot_query:
-#             raise HTTPException(status_code=400, detail="Drop Dublicate parameter not found")
-        
-#         index = transformation_input.pivot_query.index
-#         column = transformation_input.pivot_query.column
-#         value = transformation_input.pivot_query.value
-#         aggfun = transformation_input.pivot_query.aggfun
-#         print(f"Applying Pivot Tables on column, Pivot tables on String->: {index}, {column}, {value}, {aggfun}")
-
-#         split_col_value = index.split(',')
-#          # Check if all columns in split_col_value exist in df.columns
-#         if not all(col in df.columns for col in split_col_value):
-#             missing_columns = [col for col in split_col_value if col not in df.columns]
-#             raise HTTPException(status_code=400, detail=f"Columns {missing_columns} not found in dataset")
-        
-#         # Apply the pivot table transformation
-#         try:
-#             df = pd.pivot_table(df, index=split_col_value, values=value, columns=column, aggfunc=aggfun)
-#         except Exception as e:
-#             raise HTTPException(status_code=500, detail=f"Error applying pivot table: {str(e)}")
-        
-
-
-#     data =  {
-#         "dataset_id": dataset_id,
-#         "operation_type": transformation_input.operation_type,
-#         # "result": result,
-#         "row_count": len(df),
-#         "columns": df.columns.tolist(),
-#         "rows": df.values.tolist()  # Convert dataframe rows to list of lists
-#         }
-
-#     print("msg to frontend from complex api", data)
-#     return data 
 
 @router.post("/{dataset_id}/Complextransform", response_model=schemas.BasicQueryResponse)
 async def Complextransform(
@@ -495,10 +404,31 @@ def apply_transformation(df: pd.DataFrame, action_type: str, action_details: dic
         index = action_details['row_params']['index']
         column_name = df.columns[index]
         df = df.drop(column_name, axis=1)
+
+    elif action_type == 'changeCellValue':
+        row_index = action_details['change_cell_value']['row_index']
+        column_index = action_details['change_cell_value']['col_index']
+        new_value = action_details['change_cell_value']['fill_value']
+
+        if row_index >= len(df) or column_index >= len(df.columns):
+            raise ValueError("Row or column index out of bounds")
+        
+        column_name = df.columns[column_index]
+        df.at[row_index, column_name] = new_value
     
     elif action_type == 'fillEmpty':
-        value = action_details['fill_empty_params']['index']
-        df = df.fillna(value)
+        fill_value = action_details['fill_empty_params']['fill_value']
+        column_index = action_details['fill_empty_params'].get('index')
+
+        if column_index is not None:
+            # Fill only the specified column
+            if column_index >= len(df.columns) or column_index < 0:
+                raise ValueError("Column index out of range")
+            column_name = df.columns[column_index]
+            df[column_name] = df[column_name].fillna(fill_value)
+        else:
+            # Fill all columns
+            df = df.fillna(fill_value)
     
     elif action_type == 'dropDuplicate':
         columns = action_details['drop_duplicate']['columns'].split(',')
@@ -552,49 +482,6 @@ async def save_dataset(dataset_id: int, commit_message: str, db: Session = Depen
     }
     return data
 
-# # New endpoint to revert to a checkpoint
-# @router.post("/{dataset_id}/revert", response_model=schemas.DatasetResponse)
-# async def revert_to_checkpoint(dataset_id: int, checkpoint_id: int, db: Session = Depends(database.get_db)):
-#     dataset = get_dataset(db, dataset_id)
-#     if not dataset:
-#         raise HTTPException(status_code=404, detail=f"Dataset with ID {dataset_id} not found")
-
-#     # Load the original dataset
-#     original_path = dataset.file_path.replace('_copy.csv', '.csv')
-#     df = pd.read_csv(original_path)
-
-#     # Get all applied logs  to the checkpoint
-#     logs = db.query(models.DatasetChangeLog).filter(
-#         models.DatasetChangeLog.dataset_id == dataset_id,
-#         models.DatasetChangeLog.applied == True,
-#         models.DatasetChangeLog.checkpoint_id <= checkpoint_id
-#     ).order_by(models.DatasetChangeLog.timestamp).all()
-
-#     # Apply all transformations 
-#     for log in logs:
-#         df = apply_transformation(df, log.action_type, log.action_details)
-
-   
-#     save_dataframe_to_csv(df, dataset.file_path)
-
-#     #  logs after the checkpoint as unapplied
-#     db.query(models.DatasetChangeLog).filter(
-#         models.DatasetChangeLog.dataset_id == dataset_id,
-#         models.DatasetChangeLog.checkpoint_id > checkpoint_id
-#     ).update({models.DatasetChangeLog.applied: False})
-
-#     db.commit()
-
-#     data = {
-#         "filename": dataset.name,
-#         "file_path": dataset.file_path,
-#         "dataset_id": dataset.dataset_id,
-#         "columns": df.columns.tolist(),
-#         "row_count": len(df),
-#         "rows": df.values.tolist()
-#     }
-#     return data
- 
 
 
 
