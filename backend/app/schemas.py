@@ -27,7 +27,7 @@ class ChangeCellValue(BaseModel):
     fill_value: Any   
 
 class FillEmptyParams(BaseModel):
-    index: Optional[int]   
+    index: Optional[int]  
     fill_value: Any   
 
 
@@ -71,7 +71,7 @@ class ActionTypes(str, Enum):
     dropDuplicate = 'dropDuplicate'
     advQueryFilter = 'advQueryFilter'
     pivotTables = 'pivotTables'
-    chnageCellValue = 'abcd'
+    changeCellValue = 'changeCellValue'
 class UserLogsAction(BaseModel):
     # user_id: int
     datasetId: int

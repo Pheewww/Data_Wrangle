@@ -106,6 +106,10 @@ const Table = ({ datasetId, data: externalData }) => {
       alert("Cannot delete the S.No. column.");
       return;
     }
+
+    // the table has 0 indexed columns, but the API expects 1 indexed columns
+     index-=1;
+     console.log("Index for API:", index);
     try {
       const response = await transformDataset(datasetId, {
         operation_type: "delCol",
@@ -130,7 +134,7 @@ const Table = ({ datasetId, data: externalData }) => {
     );
     try {
       const response = await transformDataset(datasetId, {
-        operation_type: "ChangeCellValue",
+        operation_type: "changeCellValue",
         change_cell_value: {
           col_index: cellIndex, // The column index that you want to fill
           row_index: rowIndex, // The column index that you want to fill
@@ -219,7 +223,7 @@ const Table = ({ datasetId, data: externalData }) => {
   return (
     <div className="container mx-auto p-4" onClick={handleCloseContextMenu}>
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold text-gray-700">Data Table</h1>
+        <h1 className="text-xl font-bold text-black">Data Table</h1>
       </div>
 
       <div className="max-h-[500px] overflow-x-scroll overflow-y-auto border border-gray-300 rounded-lg shadow">
@@ -253,7 +257,7 @@ const Table = ({ datasetId, data: externalData }) => {
                 {row.map((cell, cellIndex) => (
                   <td
                     key={cellIndex}
-                    className="py-2 px-4 border-b border-gray-300 text-sm text-gray-700"
+                    className="py-2 px-4 border-b border-gray-300 text-sm  text-black"
                     onContextMenu={(e) =>
                       handleRightClick(e, rowIndex, null, "row")
                     }
@@ -271,7 +275,7 @@ const Table = ({ datasetId, data: externalData }) => {
                         onKeyDown={(e) =>
                           handleInputKeyDown(e, rowIndex, cellIndex)
                         }
-                        autoFocus
+                        // autoFocus
                         className="w-full p-1 border border-blue-300 rounded"
                       />
                     ) : (
