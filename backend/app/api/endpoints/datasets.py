@@ -234,25 +234,60 @@ async def transform_dataset(
         # Log the transformation
         log_transformation(db, dataset_id, transformation_input)
 
-    elif transformation_input.operation_type == 'fillEmpty':
-        if not transformation_input.fill_empty_params:
+    elif transformation_input.operation_type == 'ChangeCellValue':
+        if not transformation_input.change_cell_value:
             raise HTTPException(status_code=400, detail="Please provide the values that has to be filled")
         
         df = pd.read_csv(dataset.file_path, na_values=[' ', '']) 
         
-        value = transformation_input.fill_empty_params.index 
+        # Extracting the value to fill NaNs from the payload
+        new_value = transformation_input.change_cell_value.fill_value
 
-        # if you need name instead index, find column name using df as array that has index
-        # implement forward and backward fill
-        df.fillna(value, inplace=True)
+    # Extracting the column index (if required)
+        column_index = transformation_input.change_cell_value.col_index
+        row_index = transformation_input.change_cell_value.row_index
+
+        # Validate indices
+        if row_index >= len(df) or column_index >= len(df.columns):
+            raise HTTPException(status_code=400, detail="Row or column index out of bounds")
+
+    # Update the specific cell
+        column_name = df.columns[column_index - 1]
+        df.at[row_index, column_name] = new_value
 
         save_dataframe_to_csv(df, dataset.file_path)
         # Log the transformation
         log_transformation(db, dataset_id, transformation_input)
 
+    #     elif transformation_input.operation_type == 'fillEmpty':
+    #     if not transformation_input.fill_empty_params:
+    #         raise HTTPException(status_code=400, detail="Please provide the values that has to be filled")
+        
+    #     df = pd.read_csv(dataset.file_path, na_values=[' ', '']) 
+        
+    #     # Extracting the value to fill NaNs from the payload
+    #     fill_value = transformation_input.fill_empty_params.fill_value
+
+    # # Extracting the column index (if required)
+    #     column_index = transformation_input.fill_empty_params.index
+
+    # # Apply fill operation
+    #     if column_index is not None:
+    #     # If a specific column is to be filled
+    #      column_name = df.columns[column_index]
+    #      df[column_name] = fill_value
+    #     else:
+    #     # Fill all columns if no specific column is provided
+    #         df.fillna(fill_value, inplace=True)
+
+    #     save_dataframe_to_csv(df, dataset.file_path)
+    #     # Log the transformation
+    #     log_transformation(db, dataset_id, transformation_input)
+
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported operation type: {transformation_input.operation_type}")
     
+    df.fillna('', inplace=True)
     data =  {
         "dataset_id": dataset_id,
         "operation_type": transformation_input.operation_type,
@@ -563,7 +598,6 @@ async def save_dataset(dataset_id: int, commit_message: str, db: Session = Depen
 
 
 
-
 @router.post("/{dataset_id}/revert", response_model=schemas.DatasetResponse)
 async def revert_to_checkpoint(dataset_id: int, checkpoint_id: int = Query(...), db: Session = Depends(database.get_db)):
     dataset = get_dataset(db, dataset_id)
@@ -574,14 +608,14 @@ async def revert_to_checkpoint(dataset_id: int, checkpoint_id: int = Query(...),
     original_path = dataset.file_path.replace('_copy.csv', '.csv')
     df = pd.read_csv(original_path)
 
-    # Get all applied logs  to the checkpoint
+    # Get all applied logs to the checkpoint
     logs = db.query(models.DatasetChangeLog).filter(
         models.DatasetChangeLog.dataset_id == dataset_id,
         models.DatasetChangeLog.applied == True,
         models.DatasetChangeLog.checkpoint_id <= checkpoint_id
     ).order_by(models.DatasetChangeLog.timestamp).all()
 
-    # Apply all transformations 
+    # Apply all transformations
     for log in logs:
         df = apply_transformation(df, log.action_type, log.action_details)
 
@@ -592,6 +626,13 @@ async def revert_to_checkpoint(dataset_id: int, checkpoint_id: int = Query(...),
         models.DatasetChangeLog.dataset_id == dataset_id,
         models.DatasetChangeLog.checkpoint_id > checkpoint_id
     ).update({models.DatasetChangeLog.applied: False})
+
+    # Delete all unapplied logs that have `checkpoint_id` as None
+    db.query(models.DatasetChangeLog).filter(
+        models.DatasetChangeLog.dataset_id == dataset_id,
+        models.DatasetChangeLog.checkpoint_id == None,
+        models.DatasetChangeLog.applied == False
+    ).delete()
 
     db.commit()
 
