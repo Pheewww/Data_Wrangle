@@ -1,6 +1,6 @@
 from pydantic import BaseModel 
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional, Union, Any
 import datetime
 
 
@@ -21,8 +21,14 @@ class Add_or_Del_Column(BaseModel):
     index: int
     name: str
 
+class ChangeCellValue(BaseModel):
+    col_index: int   
+    row_index: int  
+    fill_value: Any   
+
 class FillEmptyParams(BaseModel):
-    index: int
+    index: Optional[int]   
+    fill_value: Any   
 
 
 # Complex Functions
@@ -65,6 +71,7 @@ class ActionTypes(str, Enum):
     dropDuplicate = 'dropDuplicate'
     advQueryFilter = 'advQueryFilter'
     pivotTables = 'pivotTables'
+    chnageCellValue = 'abcd'
 class UserLogsAction(BaseModel):
     # user_id: int
     datasetId: int
@@ -95,6 +102,7 @@ class TransformationInput(BaseModel):
     drop_duplicate: Optional[DropDuplicates] = None
     adv_query: Optional[AdvQuery] = None
     pivot_query: Optional[Pivot] = None
+    change_cell_value: Optional[ChangeCellValue] = None
  
 class BasicQueryResponse(BaseModel):
     dataset_id: int

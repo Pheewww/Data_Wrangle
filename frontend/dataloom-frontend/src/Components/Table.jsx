@@ -130,18 +130,28 @@ const Table = ({ datasetId, data: externalData }) => {
     );
     try {
       const response = await transformDataset(datasetId, {
-        operation_type: "fillEmpty",
-        fill_empty_params: { index: newValue },
+        operation_type: "ChangeCellValue",
+        change_cell_value: {
+          col_index: cellIndex, // The column index that you want to fill
+          row_index: rowIndex, // The column index that you want to fill
+          fill_value: newValue, // The value you want to use to fill the NaNs
+        },
       });
       console.log("Edit cell response:", response.data);
       updateTableData(response.data);
       setEditingCell(null);
       setEditValue("");
+      const { columns, rows } = response.data;
+      console.log("Columns from API data in add col:", columns);
+      console.log("Rows from API data in add col:", rows);
+      setColumns(["S.No.", ...columns]);
+      setData(rows.map((row, index) => [index + 1, ...Object.values(row)]));
     } catch (error) {
       console.error("Error editing cell:", error);
       alert("Failed to edit cell. Please try again.");
     }
   };
+
 
   const handleCellClick = (rowIndex, cellIndex, cellValue) => {
     console.log(
