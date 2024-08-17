@@ -1,6 +1,6 @@
 from pydantic import BaseModel 
 from enum import Enum
-from typing import Optional, Union, Any
+from typing import Optional, Union, Any, List
 import datetime
 
 
@@ -119,3 +119,17 @@ class DatasetResponse(BaseModel):
     columns: list[str]
     row_count: int
     rows: list[list]
+
+class LastResponse(BaseModel):
+    dataset_id: int
+    name: str
+    description: Optional[str] 
+    last_modified: datetime.datetime
+
+    class Config:
+        from_attributes = True
+
+class LastThreeResponse(BaseModel):
+    datasets: List[DatasetResponse]     
+
+ 
