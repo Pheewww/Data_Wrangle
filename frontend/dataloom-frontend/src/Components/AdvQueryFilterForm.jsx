@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import TableDisplay from "./TableDisplay"; // Import TableDisplay component
 import { complexTransformDataset } from "../api"; // Import the API call function
 
-const AdvQueryFilterForm = ({ onClose }) => {
+const AdvQueryFilterForm = ({ datasetId, onClose }) => {
   const [query, setQuery] = useState("");
   const [result, setResult] = useState(null); // State to hold API response
   const [loading, setLoading] = useState(false);
@@ -13,8 +13,7 @@ const AdvQueryFilterForm = ({ onClose }) => {
     console.log("Query:", query);
     setLoading(true); // Set loading state
     try {
-      // Replace this with your API call to fetch the result
-      const datasetId = 1; // Replace with the actual dataset ID you want to use
+      
       const response = await complexTransformDataset(datasetId, {
         operation_type: "advQueryFilter",
         adv_query: { query },
@@ -67,6 +66,7 @@ const AdvQueryFilterForm = ({ onClose }) => {
 };
 
 AdvQueryFilterForm.propTypes = {
+  datasetId: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
 };
 

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import TableDisplay from "./TableDisplay"; // Import TableDisplay component
 import { complexTransformDataset } from "../api"; // Import the API call function
 
-const PivotTableForm = ({ onClose }) => {
+const PivotTableForm = ({ datasetId, onClose }) => {
   const [index, setIndex] = useState("");
   const [column, setColumn] = useState("");
   const [value, setValue] = useState("");
@@ -15,8 +15,7 @@ const PivotTableForm = ({ onClose }) => {
     e.preventDefault();
     setLoading(true); // Set loading state
     try {
-      // Replace this with your API call to fetch the result
-      const datasetId = 1; // Replace with the actual dataset ID you want to use
+      
       const response = await complexTransformDataset(datasetId, {
         operation_type: "pivotTables",
         pivot_query: { index, column, value, aggfun },
@@ -109,6 +108,7 @@ const PivotTableForm = ({ onClose }) => {
 };
 
 PivotTableForm.propTypes = {
+  datasetId: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
 };
 

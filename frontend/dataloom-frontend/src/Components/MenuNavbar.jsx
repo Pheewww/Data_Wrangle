@@ -744,9 +744,17 @@ const Menu_NavBar = ({ datasetId, onTransform }) => {
 
       {/* Render forms based on their respective state */}
       {showFilterForm && (
-        <FilterForm onClose={() => setShowFilterForm(false)} />
+        <FilterForm
+          onClose={() => setShowFilterForm(false)}
+          datasetId={datasetId}
+        />
       )}
-      {showSortForm && <SortForm onClose={() => setShowSortForm(false)} />}
+      {showSortForm && (
+        <SortForm
+          onClose={() => setShowSortForm(false)}
+          datasetId={datasetId}
+        />
+      )}
       {showDropDuplicateForm && (
         <DropDuplicateForm
           datasetId={datasetId}
@@ -755,10 +763,16 @@ const Menu_NavBar = ({ datasetId, onTransform }) => {
         />
       )}
       {showAdvQueryFilterForm && (
-        <AdvQueryFilterForm onClose={() => setShowAdvQueryFilterForm(false)} />
+        <AdvQueryFilterForm
+          onClose={() => setShowAdvQueryFilterForm(false)}
+          datasetId={datasetId}
+        />
       )}
       {showPivotTableForm && (
-        <PivotTableForm onClose={() => setShowPivotTableForm(false)} />
+        <PivotTableForm
+          onClose={() => setShowPivotTableForm(false)}
+          datasetId={datasetId}
+        />
       )}
       {showLogs && <LogsTable logs={logs} onClose={() => setShowLogs(false)} />}
       {showCheckpoints && (
@@ -773,7 +787,7 @@ const Menu_NavBar = ({ datasetId, onTransform }) => {
 };
 
 Menu_NavBar.propTypes = {
-  datasetId: proptype.number.isRequired,
+  datasetId: proptype.string.isRequired,
   onTransform: proptype.func.isRequired,
 };
 

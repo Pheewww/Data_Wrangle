@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Query
+from fastapi import APIRouter, Depends, HTTPException, File, Form,  UploadFile, Query
 from sqlalchemy.orm import Session
 from app import models, schemas, database
 import pandas as pd
 import shutil
+from typing import List
 
 router = APIRouter()
 
 # CRUD Functions ---------------------------------------
-def create_dataset(db: Session, filename: str, file_path: str ):
+def create_dataset(db: Session, filename: str, file_path: str, description: str):
     # if user_id is None:
     #     print("User ID is None")
-    db_dataset = models.Dataset(name=filename, file_path=file_path)
+    db_dataset = models.Dataset(name=filename, file_path=file_path, description=description)
     print("db_dataset in create_dataset", db_dataset)
     db.add(db_dataset)
     db.commit()
@@ -60,7 +61,12 @@ def get_column_type(df: pd.DataFrame, column: str) -> str:
 
 # API Routes
 @router.post("/upload", response_model=schemas.DatasetResponse)
-async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(database.get_db)):
+async def upload_dataset(file: UploadFile = File(...), projectName: str = Form(...),
+    projectDescription: str = Form(...), db: Session = Depends(database.get_db)):
+
+    print("Received projectName:", projectName)
+    print("Received projectDescription:", projectDescription)
+    print("Received file:", file.filename)
 
     print("FILE ->", file.filename)
 
@@ -76,7 +82,8 @@ async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(dat
     #  a copy of the dataset
     copy_location = create_dataset_copy(file_location)
     
-    dataset = create_dataset(db, filename=file.filename, file_path=copy_location)
+    dataset = create_dataset(db, filename=projectName, file_path=copy_location, description=projectDescription)
+    
     
     data = {
         "filename": dataset.name,
@@ -88,6 +95,44 @@ async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(dat
     }
     print("return to frontend", data)
     return data
+
+
+@router.get("/get/{dataset_id}", response_model=schemas.DatasetResponse)
+async def get_dataset_details(dataset_id: int, db: Session = Depends(database.get_db)):
+    dataset = db.query(models.Dataset).filter(models.Dataset.dataset_id == dataset_id).first()
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    # Read the dataset file
+    try:
+        df = pd.read_csv(dataset.file_path)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error reading dataset: {str(e)}")
+
+    data = {
+        "filename": dataset.name,
+        "file_path": dataset.file_path,
+        "dataset_id": dataset_id,
+        "columns": df.columns.tolist(),
+        "row_count": len(df),
+        "rows": df.values.tolist()
+    }
+    
+    print("return to frontend", data)
+    return data
+ 
+
+@router.get("/recent", response_model=List[schemas.LastResponse])
+def get_recent_datasets(db: Session = Depends(database.get_db)):
+    recent_datasets = db.query(models.Dataset).order_by(models.Dataset.last_modified.desc()).limit(3).all()
+    return [
+        schemas.LastResponse(
+            dataset_id=dataset.dataset_id,
+            name=dataset.name,
+            description=dataset.description,
+            last_modified=dataset.last_modified
+        ) for dataset in recent_datasets
+    ]
 
 
 @router.post("/{dataset_id}/transform", response_model=schemas.BasicQueryResponse)
