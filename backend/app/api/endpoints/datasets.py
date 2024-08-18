@@ -380,13 +380,34 @@ async def Complextransform(
     elif transformation_input.operation_type == 'advQueryFilter':
         if not transformation_input.adv_query:
             raise HTTPException(status_code=400, detail="Advanced Query parameter not provided")
-        
+
         query_string = transformation_input.adv_query.query
         print(f"Applying Advanced Query: {query_string}")
 
-        # Ensure column names are properly escaped in the query
         try:
+            # Ensure all columns and query components are properly formatted
+            query_string = query_string.replace("'", "\"")  # Replace single quotes with double quotes
+
+            query_string = query_string.strip()
+            for col in df.columns:
+                if not col.isidentifier():  # Check if column names need backticks
+                    query_string = query_string.replace(col, f'`{col}`')
+
+            # Print available columns and their types
+            print(f"Available columns: {df.columns.tolist()}")
+            for column in df.columns:
+                col_type = get_column_type(df, column)
+                print(f"Column '{column}' type: {col_type}")
+
+            # Print the formatted query
+            print(f"Formatted Query: {query_string}")
+
+            # Use the query method to filter the DataFrame
             df = df.query(query_string)
+        
+            print("Query applied successfully. Resulting dataframe:")
+            print(df)
+
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Error applying query '{query_string}': {str(e)}")
 
@@ -399,15 +420,26 @@ async def Complextransform(
         column = transformation_input.pivot_query.column
         value = transformation_input.pivot_query.value
         aggfun = transformation_input.pivot_query.aggfun
+        
         print(f"Applying Pivot Table with index: {index}, column: {column}, value: {value}, aggregation function: {aggfun}")
 
         split_col_value = index.split(',')
-        if not all(col in df.columns for col in split_col_value):
-            missing_columns = [col for col in split_col_value if col not in df.columns]
-            raise HTTPException(status_code=400, detail=f"Columns {missing_columns} not found in dataset")
 
+        # Check if all required columns exist in the dataset
+        all_cols = split_col_value + ([column] if column else []) + [value]
+        missing_columns = [col for col in all_cols if col not in df.columns]
+        if missing_columns:
+            raise HTTPException(status_code=400, detail=f"Columns {missing_columns} not found in dataset")
+        
         try:
-            df = pd.pivot_table(df, index=split_col_value, values=value, columns=column, aggfunc=aggfun)
+            if column:
+                df = pd.pivot_table(df, index=split_col_value, values=value, columns=column, aggfunc=aggfun)
+            else:
+                df = pd.pivot_table(df, index=split_col_value, values=value, aggfunc=aggfun)
+        
+            # Convert column names to strings and reset index
+            df.columns = df.columns.astype(str)
+            df = df.reset_index()
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error applying pivot table: {str(e)}")
 

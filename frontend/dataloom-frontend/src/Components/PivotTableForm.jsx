@@ -27,7 +27,6 @@ const PivotTableForm = ({ datasetId, onClose }) => {
     } finally {
       setLoading(false); // Reset loading state
     }
-    onClose(); // Close the form after submission
   };
 
   return (
