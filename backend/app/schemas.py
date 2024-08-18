@@ -47,12 +47,13 @@ class AdvQuery(BaseModel):
 class AggFunc(str, Enum):
     sum = 'sum'
     mean = 'mean'
+    median = 'median'
     min = 'min'
     max = 'max'
     count = 'count'
 class Pivot(BaseModel):
     index: str
-    column: str
+    column: Optional[str] = None
     value: str
     aggfun: AggFunc
 class RevertRequest(BaseModel):
