@@ -130,7 +130,4 @@ class LastResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class LastThreeResponse(BaseModel):
-    datasets: List[DatasetResponse]     
-
  
